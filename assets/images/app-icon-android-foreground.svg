@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="shieldFill" x1="50%" y1="20%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.12" />
+    </linearGradient>
+  </defs>
+
+  <path
+    d="M512 176C349 176 246 274 246 392V602C246 749 359 850 512 922C665 850 778 749 778 602V392C778 274 675 176 512 176Z"
+    fill="url(#shieldFill)"
+    stroke="#FFFFFF"
+    stroke-opacity="0.4"
+    stroke-width="6"
+  />
+
+  <path
+    d="M432 514L510 592L654 460"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="28"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

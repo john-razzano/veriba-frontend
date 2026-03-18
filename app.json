@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "Provē",
+    "slug": "prove-agence",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "prove",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#EDEDEB"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.jrazzano.proveagence"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#EDEDEB",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.jrazzano.proveagence"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Provē uses your photo library so you can attach before and after photos.",
+          "cameraPermission": "Provē uses your camera to capture verified treatment photos."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Provē records location at capture time to verify photo chain of custody."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
