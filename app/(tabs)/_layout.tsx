@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
+import { View } from 'react-native';
 
 import { colors } from '@/src/theme';
 import { useProveStore } from '@/src/store/prove-store';
@@ -35,8 +36,25 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="new"
         options={{
-          title: 'New',
-          tabBarIcon: ({ color }) => <Ionicons name="add-circle-outline" size={24} color={color} />,
+          title: '',
+          tabBarIcon: () => (
+            <View style={{
+              width: 52,
+              height: 52,
+              borderRadius: 26,
+              backgroundColor: colors.copper,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 16,
+              shadowColor: colors.copper,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.35,
+              shadowRadius: 8,
+              elevation: 6,
+            }}>
+              <Ionicons name="add" size={28} color="#fff" />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen

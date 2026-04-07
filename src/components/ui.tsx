@@ -83,8 +83,14 @@ export function StatusPill({ status }: { status: SessionStatus }) {
   const tone =
     status === 'published'
       ? { bg: colors.successBg, text: colors.success }
-      : status === 'pending_consent'
+      : status === 'pending_after'
         ? { bg: colors.warningBg, text: colors.warning }
+      : status === 'ready_to_publish'
+        ? { bg: 'rgba(45,79,94,0.08)', text: colors.teal }
+      : status === 'pending_consent'
+        ? { bg: 'rgba(45,79,94,0.08)', text: colors.teal }
+        : status === 'declined'
+          ? { bg: 'rgba(156,74,65,0.12)', text: colors.error }
         : { bg: colors.borderLight, text: colors.textLight };
 
   return (

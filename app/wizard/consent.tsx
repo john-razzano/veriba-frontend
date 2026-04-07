@@ -4,13 +4,21 @@ import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ImageEditorModal } from '@/src/components/image-editor-modal';
-import { PhotoPairCard } from '@/src/components/photo-preview';
+import {
+  ProgressionCarouselCard,
+  type ProgressionCarouselItem,
+} from '@/src/components/photo-preview';
 import { SignaturePad } from '@/src/components/signature-pad';
-import { ChipButton } from '@/src/components/ui';
+import { ChipButton, SectionCard } from '@/src/components/ui';
 import { WizardScreen } from '@/src/components/wizard-screen';
-import { CONSENT_TIERS } from '@/src/types';
-import { colors, fonts, radii, spacing, typography } from '@/src/theme';
 import { useProveStore } from '@/src/store/prove-store';
+import { colors, fonts, spacing, typography } from '@/src/theme';
+import { CONSENT_TIERS } from '@/src/types';
+import {
+  followUpMethodLabel,
+  followUpTimingLabel,
+  formatCompactDate,
+} from '@/src/utils/format';
 
 export default function ConsentStepScreen() {
   const router = useRouter();
@@ -42,40 +50,80 @@ export default function ConsentStepScreen() {
     return () => clearTimeout(timeoutId);
   }, [showPad]);
 
-  if (!wizard.treatment || !wizard.beforePhoto || !wizard.afterPhoto) {
+  if (!wizard.treatment || !wizard.beforePhoto) {
     return <Redirect href="/wizard/photos" />;
   }
 
-  const canContinue = Boolean(wizard.consentTier) && wizard.signed;
+  const featuredAfter = wizard.progressPhotos[0] ?? null;
+  const hasAfterPhoto = Boolean(featuredAfter);
+  const requiresSignature = Boolean(wizard.consentTier) && wizard.consentTier !== 'decline';
+  const canContinue = wizard.consentTier === 'decline' || (Boolean(wizard.consentTier) && wizard.signed);
+
+  const carouselItems: ProgressionCarouselItem[] = [
+    {
+      id: 'baseline',
+      title: 'Baseline',
+      subtitle: 'Captured by provider',
+      meta: formatCompactDate(wizard.beforePhoto.capturedAt),
+      uri: wizard.beforePhoto.uri,
+      obscuration: wizard.beforeObscuration,
+      variant: 'before',
+      badge: 'Provider',
+      onEdit: hasAfterPhoto && wizard.consentTier ? () => setEditorTarget('before') : undefined,
+    },
+  ];
+
+  if (featuredAfter) {
+    carouselItems.push({
+      id: featuredAfter.id,
+      title: featuredAfter.label || 'After',
+      subtitle:
+        featuredAfter.submittedBy === 'patient' ? 'Submitted by patient' : 'Captured by provider',
+      meta: formatCompactDate(featuredAfter.capturedAt),
+      uri: featuredAfter.uri,
+      obscuration: wizard.afterObscuration,
+      variant: 'after',
+      badge: featuredAfter.submittedBy === 'patient' ? 'Patient' : 'Provider',
+      onEdit: wizard.consentTier ? () => setEditorTarget('after') : undefined,
+    });
+  } else {
+    carouselItems.push({
+      id: 'pending-after',
+      title: 'After photo pending',
+      subtitle:
+        wizard.followUpRequest.method === 'patient_link'
+          ? 'Save now and optionally schedule a secure patient upload link.'
+          : wizard.followUpRequest.method === 'follow_up_visit'
+            ? 'Save now and collect the after photo at a later clinic visit.'
+            : 'Save the session as pending until another verified image is added.',
+      meta:
+        wizard.followUpRequest.method === 'not_needed'
+          ? 'No follow-up scheduled.'
+          : `${followUpMethodLabel(wizard.followUpRequest.method)} · ${followUpTimingLabel(wizard.followUpRequest.timing)}`,
+      pending: true,
+      badge: 'Pending',
+    });
+  }
 
   return (
     <>
       <WizardScreen
         step={3}
-        continueLabel="Continue"
+        continueLabel={hasAfterPhoto ? 'Continue' : 'Continue to Review'}
         continueDisabled={!canContinue}
         scrollEnabled={!signatureDrawing}
         scrollRef={scrollRef}
         onContinue={() => router.push('/wizard/publish')}>
-        <Text style={styles.title}>Patient Consent</Text>
-        <PhotoPairCard
-          beforeUri={wizard.beforePhoto.uri}
-          afterUri={wizard.afterPhoto.uri}
-          beforeObscuration={wizard.beforeObscuration}
-          afterObscuration={wizard.afterObscuration}
+        <Text style={styles.title}>Consent & Privacy</Text>
+        <ProgressionCarouselCard
+          items={carouselItems}
           treatment={wizard.treatment}
-          location={`${practice.name} · ${practice.location}`}
+          location={
+            practice ? `${practice.name} · ${practice.location}` : 'Loading practice details…'
+          }
           seed={wizard.treatment}
           verified
-          onEditBefore={wizard.consentTier ? () => setEditorTarget('before') : undefined}
-          onEditAfter={wizard.consentTier ? () => setEditorTarget('after') : undefined}
         />
-
-        <Text style={styles.helperText}>
-          {wizard.consentTier
-            ? 'Each image can be edited independently. Use the pencil button on either photo to adjust the overlay style, placement, size, opacity, and color.'
-            : 'Choose a usage consent level first to unlock the per-image editor.'}
-        </Text>
 
         <Text style={styles.sectionLabel}>Usage Consent</Text>
         <View style={styles.stack}>
@@ -91,7 +139,7 @@ export default function ConsentStepScreen() {
           ))}
         </View>
 
-        {wizard.consentTier ? (
+        {requiresSignature ? (
           <View style={styles.signatureBlock}>
             <Text style={styles.sectionLabel}>Signature Capture</Text>
             {!showPad ? (
@@ -142,12 +190,19 @@ export default function ConsentStepScreen() {
               </View>
             )}
           </View>
+        ) : wizard.consentTier === 'decline' ? (
+          <SectionCard style={styles.noticeCard}>
+            <Text style={styles.noticeTitle}>Patient declined publishing</Text>
+            <Text style={styles.noticeText}>
+              No signature is required for a declined session. Continuing will save this session as declined.
+            </Text>
+          </SectionCard>
         ) : null}
       </WizardScreen>
 
       <ImageEditorModal
         visible={editorTarget === 'before'}
-        title="Before Image"
+        title="Baseline Image"
         imageUri={wizard.beforePhoto.uri}
         seed={`${wizard.treatment}-before`}
         value={wizard.beforeObscuration}
@@ -155,9 +210,9 @@ export default function ConsentStepScreen() {
         onSave={(value) => setWizardPhotoObscuration('before', value)}
       />
       <ImageEditorModal
-        visible={editorTarget === 'after'}
+        visible={editorTarget === 'after' && Boolean(featuredAfter)}
         title="After Image"
-        imageUri={wizard.afterPhoto.uri}
+        imageUri={featuredAfter?.uri}
         seed={`${wizard.treatment}-after`}
         value={wizard.afterObscuration}
         onClose={() => setEditorTarget(null)}
@@ -189,11 +244,6 @@ const styles = StyleSheet.create({
   signatureBlock: {
     marginBottom: spacing.xxl,
   },
-  helperText: {
-    ...typography.bodyXs,
-    color: colors.textLight,
-    marginBottom: spacing.sm,
-  },
   signatureStatus: {
     gap: spacing.sm,
   },
@@ -204,9 +254,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   signatureText: {
-    fontFamily: fonts.body.medium,
-    fontSize: 12,
-    color: colors.success,
+    ...typography.bodySm,
+    color: colors.text,
   },
   padWrap: {
     gap: spacing.sm,
@@ -217,5 +266,18 @@ const styles = StyleSheet.create({
   },
   inlineChip: {
     flex: 1,
+  },
+  noticeCard: {
+    marginTop: spacing.lg,
+  },
+  noticeTitle: {
+    fontFamily: fonts.body.semibold,
+    fontSize: 13,
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  noticeText: {
+    ...typography.bodySm,
+    color: colors.textLight,
   },
 });

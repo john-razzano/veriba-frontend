@@ -5,6 +5,7 @@ import {
   Image,
   PanResponder,
   Pressable,
+  ScrollView,
   StyleProp,
   StyleSheet,
   Text,
@@ -206,7 +207,33 @@ export function PhotoSurface({
         });
       }}>
       {uri ? (
-        <Image source={{ uri }} resizeMode="cover" style={StyleSheet.absoluteFillObject} />
+        <Image
+          source={{ uri }}
+          resizeMode="cover"
+          style={StyleSheet.absoluteFillObject}
+          onLoadStart={() => {
+            console.log('[photo.surface] load start', {
+              seed,
+              variant,
+              uri,
+            });
+          }}
+          onLoad={() => {
+            console.log('[photo.surface] load success', {
+              seed,
+              variant,
+              uri,
+            });
+          }}
+          onError={(event) => {
+            console.error('[photo.surface] load error', {
+              seed,
+              variant,
+              uri,
+              error: event.nativeEvent.error,
+            });
+          }}
+        />
       ) : (
         <FaceIllustration variant={variant} seed={seed} />
       )}
@@ -310,6 +337,92 @@ export function PhotoSlot({
         style={styles.slotSurface}
       />
     </LinearGradient>
+  );
+}
+
+export type ProgressionCarouselItem = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  meta?: string;
+  uri?: string | null;
+  obscuration?: PhotoObscuration | null;
+  variant?: 'before' | 'after';
+  badge?: string;
+  pending?: boolean;
+  onEdit?: () => void;
+};
+
+export function ProgressionCarouselCard({
+  items,
+  treatment,
+  location,
+  seed,
+  verified,
+}: {
+  items: ProgressionCarouselItem[];
+  treatment?: string;
+  location?: string;
+  seed: string;
+  verified?: boolean;
+}) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        {verified ? <VerifiedBadge compact /> : <View />}
+        {treatment ? <Text style={styles.metaTreatment}>{treatment}</Text> : null}
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.carouselRow}>
+        {items.map((item, index) => (
+          <View key={item.id} style={[styles.carouselSlide, index === items.length - 1 && styles.carouselSlideLast]}>
+            {item.pending ? (
+              <View style={styles.pendingSlide}>
+                <View style={styles.pendingIconWrap}>
+                  <Ionicons name="send-outline" size={18} color={colors.copper} />
+                </View>
+                <Text style={styles.pendingTitle}>{item.title}</Text>
+                {item.subtitle ? <Text style={styles.pendingText}>{item.subtitle}</Text> : null}
+                {item.meta ? <Text style={styles.pendingMeta}>{item.meta}</Text> : null}
+              </View>
+            ) : (
+              <PhotoSurface
+                uri={item.uri ?? undefined}
+                variant={item.variant ?? 'after'}
+                obscuration={item.obscuration}
+                seed={`${seed}-${item.id}`}
+                style={styles.carouselSurface}
+                showLabel={false}
+                onEdit={item.onEdit}
+              />
+            )}
+
+            <View style={styles.carouselMeta}>
+              <View style={styles.carouselMetaHeader}>
+                <Text style={styles.carouselTitle}>{item.title}</Text>
+                {item.badge ? (
+                  <View style={styles.carouselBadge}>
+                    <Text style={styles.carouselBadgeText}>{item.badge}</Text>
+                  </View>
+                ) : null}
+              </View>
+              {item.subtitle ? <Text style={styles.carouselSubtitle}>{item.subtitle}</Text> : null}
+              {item.meta ? <Text style={styles.carouselMetaText}>{item.meta}</Text> : null}
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+
+      <View style={styles.carouselFooter}>
+        <Text style={styles.carouselCount}>
+          {items.length} {items.length === 1 ? 'slide' : 'slides'} in progression
+        </Text>
+        {location ? <Text style={styles.metaLocation}>{location}</Text> : null}
+      </View>
+    </View>
   );
 }
 
@@ -477,6 +590,112 @@ const styles = StyleSheet.create({
   pairRow: {
     flexDirection: 'row',
     gap: spacing.sm,
+  },
+  carouselRow: {
+    gap: spacing.sm,
+    paddingRight: spacing.xs,
+  },
+  carouselSlide: {
+    width: 232,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: colors.bgInput,
+    overflow: 'hidden',
+  },
+  carouselSlideLast: {
+    marginRight: spacing.xs,
+  },
+  carouselSurface: {
+    height: 250,
+    aspectRatio: undefined,
+    borderWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+    borderRadius: 0,
+  },
+  pendingSlide: {
+    height: 250,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    margin: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.bgCard,
+    gap: spacing.sm,
+  },
+  pendingIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.warningBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pendingTitle: {
+    fontFamily: fonts.body.semibold,
+    fontSize: 14,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  pendingText: {
+    ...typography.bodySm,
+    color: colors.textMid,
+    textAlign: 'center',
+  },
+  pendingMeta: {
+    ...typography.bodyXs,
+    color: colors.textLight,
+    textAlign: 'center',
+  },
+  carouselMeta: {
+    padding: spacing.md,
+    gap: 4,
+  },
+  carouselMetaHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  carouselTitle: {
+    flex: 1,
+    fontFamily: fonts.body.semibold,
+    fontSize: 13,
+    color: colors.text,
+  },
+  carouselSubtitle: {
+    ...typography.bodyXs,
+    color: colors.textMid,
+  },
+  carouselMetaText: {
+    ...typography.bodyXs,
+    color: colors.textLight,
+  },
+  carouselBadge: {
+    borderRadius: radii.full,
+    backgroundColor: colors.bgCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  carouselBadgeText: {
+    fontFamily: fonts.body.semibold,
+    fontSize: 9,
+    color: colors.teal,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  carouselFooter: {
+    gap: spacing.xs,
+  },
+  carouselCount: {
+    ...typography.bodyXs,
+    color: colors.textLight,
   },
   surface: {
     flex: 1,

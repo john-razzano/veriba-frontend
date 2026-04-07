@@ -3,14 +3,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useState } from 'react';
 
-import { buildChainOfCustody } from '@/src/data/mockData';
 import { colors, fonts, gradients, radii, shadows, spacing, typography } from '@/src/theme';
 import { formatTimestamp } from '@/src/utils/format';
 import type { Session } from '@/src/types';
 
 export function ChainOfCustodyCard({ session }: { session: Session }) {
   const [open, setOpen] = useState(false);
-  const chain = buildChainOfCustody(session);
+  const chain = session.chainOfCustody;
+  const checkpointCount = chain?.checkpoints.length ?? 0;
+  const headerSubtitleColor = chain?.allVerified ? colors.success : colors.warning;
 
   return (
     <View style={styles.card}>
@@ -21,10 +22,12 @@ export function ChainOfCustodyCard({ session }: { session: Session }) {
           </LinearGradient>
           <View>
             <Text style={styles.headerTitle}>Chain of Custody</Text>
-            <Text style={styles.headerSubtitle}>
-              {chain.allVerified
-                ? `All ${chain.checkpoints.length} checkpoints verified`
-                : 'Verification still in progress'}
+            <Text style={[styles.headerSubtitle, { color: headerSubtitleColor }]}>
+              {chain
+                ? chain.allVerified
+                  ? `All ${checkpointCount} checkpoints verified`
+                  : 'Verification still in progress'
+                : 'Detail data not loaded yet'}
             </Text>
           </View>
         </View>
@@ -34,7 +37,7 @@ export function ChainOfCustodyCard({ session }: { session: Session }) {
           color={colors.textLight}
         />
       </Pressable>
-      {open ? (
+      {open && chain ? (
         <View style={styles.timeline}>
           {chain.checkpoints.map((checkpoint, index) => (
             <View key={checkpoint.id} style={styles.stepRow}>
@@ -56,6 +59,12 @@ export function ChainOfCustodyCard({ session }: { session: Session }) {
               </View>
             </View>
           ))}
+        </View>
+      ) : open ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>
+            The backend has not returned chain-of-custody checkpoint details for this session yet.
+          </Text>
         </View>
       ) : null}
     </View>
@@ -104,6 +113,13 @@ const styles = StyleSheet.create({
   timeline: {
     marginTop: spacing.md,
     gap: spacing.sm,
+  },
+  emptyState: {
+    marginTop: spacing.md,
+  },
+  emptyText: {
+    ...typography.bodyXs,
+    color: colors.textLight,
   },
   stepRow: {
     flexDirection: 'row',

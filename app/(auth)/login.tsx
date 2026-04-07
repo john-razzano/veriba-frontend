@@ -1,19 +1,64 @@
-import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors, fonts, gradients, radii, shadows, spacing, typography } from '@/src/theme';
+import { AppInput, GradientButton, OutlineButton } from '@/src/components/ui';
+import { getApiBaseUrl } from '@/src/lib/veriba-api';
 import { useProveStore } from '@/src/store/prove-store';
+import { colors, fonts, gradients, radii, shadows, spacing, typography } from '@/src/theme';
+
+type AuthMode = 'login' | 'register';
 
 export default function LoginScreen() {
   const router = useRouter();
   const login = useProveStore((state) => state.login);
+  const register = useProveStore((state) => state.register);
+  const isAuthenticating = useProveStore((state) => state.isAuthenticating);
+  const authError = useProveStore((state) => state.authError);
+  const [mode, setMode] = useState<AuthMode>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [practiceName, setPracticeName] = useState('');
+  const [practiceLocation, setPracticeLocation] = useState('');
+  const [practiceWebsite, setPracticeWebsite] = useState('');
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null);
 
-  const continueWith = (provider: 'google' | 'apple' | 'email') => {
-    login(provider);
-    router.replace('/(tabs)');
+  const canSubmit =
+    email.trim().length > 0 &&
+    password.length >= 8 &&
+    (mode === 'login' ||
+      (name.trim().length > 0 &&
+        practiceName.trim().length > 0 &&
+        practiceLocation.trim().length > 0));
+
+  const handleSubmit = async () => {
+    try {
+      setSubmitStatus(
+        `${mode === 'login' ? 'Logging in' : 'Creating account'} against ${getApiBaseUrl() || '/api'}`
+      );
+      console.log('[auth.screen] submit', {
+        mode,
+        email: email.trim(),
+        apiBaseUrl: getApiBaseUrl() || '/api',
+      });
+      if (mode === 'login') {
+        await login({ email, password });
+      } else {
+        await register({ email, password, name, practiceName, practiceLocation, practiceWebsite });
+      }
+      console.log('[auth.screen] auth action resolved, navigating');
+      router.replace('/(tabs)');
+    } catch (error) {
+      console.error('[auth.screen] auth action failed', error);
+      setSubmitStatus(null);
+      Alert.alert(
+        mode === 'login' ? 'Unable to log in' : 'Unable to create account',
+        error instanceof Error ? error.message : 'Please try again.'
+      );
+    }
   };
 
   return (
@@ -21,42 +66,80 @@ export default function LoginScreen() {
       <View style={styles.wrap}>
         <View style={styles.logoBlock}>
           <LinearGradient colors={gradients.primary} style={styles.logoHalo} />
-          <Text style={styles.logo}>Provē</Text>
+          <Text style={styles.logo}>Veriba</Text>
           <Text style={styles.byline}>BY AGENCĒ</Text>
           <Text style={styles.tagline}>
             Verified before & after photos.{'\n'}Real results. Real trust.
           </Text>
         </View>
 
-        <View style={styles.actions}>
-          <Pressable onPress={() => continueWith('google')} style={[styles.authButton, shadows.md]}>
-            <Ionicons name="logo-google" size={18} color={colors.copper} />
-            <Text style={styles.authButtonText}>Continue with Google</Text>
-          </Pressable>
-
-          {Platform.OS === 'ios' ? (
-            <Pressable onPress={() => continueWith('apple')} style={[styles.appleButton, shadows.md]}>
-              <Ionicons name="logo-apple" size={20} color={colors.white} />
-              <Text style={styles.appleButtonText}>Continue with Apple</Text>
-            </Pressable>
+        <View style={styles.formCard}>
+          {mode === 'register' ? (
+            <>
+              <AppInput value={name} onChangeText={setName} placeholder="Full name" />
+              <AppInput
+                value={practiceName}
+                onChangeText={setPracticeName}
+                placeholder="Practice name"
+              />
+              <AppInput
+                value={practiceLocation}
+                onChangeText={setPracticeLocation}
+                placeholder="Practice location"
+              />
+              <AppInput
+                value={practiceWebsite}
+                onChangeText={setPracticeWebsite}
+                placeholder="Practice website"
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+            </>
           ) : null}
 
-          <View style={styles.dividerRow}>
-            <View style={styles.divider} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.divider} />
-          </View>
+          <AppInput
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Email"
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+          <AppInput
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Password"
+            secureTextEntry
+            autoCapitalize="none"
+          />
 
-          <Pressable onPress={() => continueWith('email')} style={styles.emailButton}>
-            <Ionicons name="mail-outline" size={18} color={colors.textMid} />
-            <Text style={styles.authButtonText}>Continue with Email</Text>
-          </Pressable>
+          {authError ? <Text style={styles.errorText}>{authError}</Text> : null}
+          {submitStatus ? <Text style={styles.statusText}>{submitStatus}</Text> : null}
+
+          <GradientButton
+            label={
+              isAuthenticating
+                ? mode === 'login'
+                  ? 'Signing In…'
+                  : 'Creating Account…'
+                : mode === 'login'
+                  ? 'Sign In'
+                  : 'Create Account'
+            }
+            onPress={() => void handleSubmit()}
+            disabled={!canSubmit || isAuthenticating}
+          />
+          <OutlineButton
+            label={mode === 'login' ? 'Need an account?' : 'Already have an account?'}
+            onPress={() => setMode(mode === 'login' ? 'register' : 'login')}
+          />
         </View>
 
-        <Text style={styles.legal}>
-          By continuing, you agree to our Terms of Service and Privacy Policy.
-        </Text>
-        <Text style={styles.footer}>Powered by Agencē Studio</Text>
+        <View style={styles.metaBlock}>
+          <Text style={styles.legal}>
+            API base URL: {getApiBaseUrl() || 'relative /api on web, set env var on native'}
+          </Text>
+          <Text style={styles.footer}>Powered by Agencē Studio</Text>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -73,10 +156,9 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xxl,
     paddingBottom: spacing.lg,
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
   logoBlock: {
-    marginTop: spacing.xxl,
+    marginTop: spacing.xl,
     alignItems: 'center',
   },
   logoHalo: {
@@ -106,70 +188,31 @@ const styles = StyleSheet.create({
     ...typography.bodyLg,
     color: colors.textMid,
   },
-  actions: {
-    width: '100%',
+  formCard: {
     gap: spacing.sm,
-  },
-  authButton: {
-    minHeight: 56,
-    borderRadius: radii.lg,
+    padding: spacing.lg,
+    borderRadius: radii.xl,
     backgroundColor: colors.bgCard,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
+    ...shadows.md,
   },
-  authButtonText: {
-    ...typography.button,
-    color: colors.text,
+  errorText: {
+    ...typography.bodyXs,
+    color: colors.error,
   },
-  appleButton: {
-    minHeight: 56,
-    borderRadius: radii.lg,
-    backgroundColor: colors.black,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  appleButtonText: {
-    ...typography.button,
-    color: colors.white,
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginVertical: spacing.xs,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
-  },
-  dividerText: {
-    fontFamily: fonts.body.medium,
-    fontSize: 11,
+  statusText: {
+    ...typography.bodyXs,
     color: colors.textLight,
   },
-  emailButton: {
-    minHeight: 56,
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: 'transparent',
-    flexDirection: 'row',
+  metaBlock: {
     alignItems: 'center',
-    justifyContent: 'center',
     gap: spacing.sm,
   },
   legal: {
     textAlign: 'center',
     ...typography.bodyXs,
     color: colors.textLight,
-    maxWidth: 260,
   },
   footer: {
     fontFamily: fonts.body.medium,

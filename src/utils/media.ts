@@ -3,7 +3,6 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 
-import { MOCK_PRACTICE } from '@/src/data/mockData';
 import type { CapturedPhoto } from '@/src/types';
 
 export async function pickCapturedPhoto(
@@ -51,13 +50,21 @@ export async function pickCapturedPhoto(
   );
   const timestamp = new Date().toISOString();
   const coordinates = await getCaptureCoordinates();
+  const fileName =
+    asset.uri
+      .split('/')
+      .pop()
+      ?.split('?')[0] ?? `capture-${Date.now()}.jpg`;
 
   return {
     uri: asset.uri,
+    fileName,
+    mimeType: asset.mimeType ?? 'image/jpeg',
     capturedAt: timestamp,
     hash,
     coordinates,
     source,
+    uploaded: false,
   };
 }
 
@@ -69,15 +76,19 @@ export async function getCaptureCoordinates() {
   const permission = await Location.requestForegroundPermissionsAsync();
 
   if (!permission.granted) {
-    return MOCK_PRACTICE.coordinates;
+    return null;
   }
 
-  const currentPosition = await Location.getCurrentPositionAsync({
-    accuracy: Location.LocationAccuracy.Balanced,
-  });
+  try {
+    const currentPosition = await Location.getCurrentPositionAsync({
+      accuracy: Location.LocationAccuracy.Balanced,
+    });
 
-  return {
-    lat: currentPosition.coords.latitude,
-    lng: currentPosition.coords.longitude,
-  };
+    return {
+      lat: currentPosition.coords.latitude,
+      lng: currentPosition.coords.longitude,
+    };
+  } catch {
+    return null;
+  }
 }

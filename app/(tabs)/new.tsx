@@ -16,7 +16,7 @@ export default function NewScreen() {
         <Text style={styles.heroEyebrow}>New Session</Text>
         <Text style={styles.heroTitle}>Capture, verify, consent, publish.</Text>
         <Text style={styles.heroText}>
-          Provē records chain-of-custody metadata from the first capture through publish.
+          Every session is timestamped, hashed, and consent-locked from first capture through publish.
         </Text>
       </LinearGradient>
 
@@ -24,9 +24,9 @@ export default function NewScreen() {
         <Text style={styles.blockTitle}>Workflow</Text>
         <View style={styles.list}>
           <Text style={styles.listItem}>1. Select the treatment performed.</Text>
-          <Text style={styles.listItem}>2. Capture before and after photos.</Text>
-          <Text style={styles.listItem}>3. Record consent and obscuring preference.</Text>
-          <Text style={styles.listItem}>4. Review SEO metadata and publish destinations.</Text>
+          <Text style={styles.listItem}>2. Capture a baseline photo and any immediate progression shots.</Text>
+          <Text style={styles.listItem}>3. Record consent and choose how future after photos will be collected.</Text>
+          <Text style={styles.listItem}>4. Save the entry as pending or publish once a second image exists.</Text>
         </View>
       </SectionCard>
 

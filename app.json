@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Provē",
+    "name": "Veriba",
     "slug": "prove-agence",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -42,16 +42,17 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Provē uses your photo library so you can attach before and after photos.",
-          "cameraPermission": "Provē uses your camera to capture verified treatment photos."
+          "photosPermission": "Veriba uses your photo library so you can attach before and after photos.",
+          "cameraPermission": "Veriba uses your camera to capture verified treatment photos."
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Provē records location at capture time to verify photo chain of custody."
+          "locationWhenInUsePermission": "Veriba records location at capture time to verify photo chain of custody."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

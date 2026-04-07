@@ -1,4 +1,10 @@
-import type { ConsentTier, SessionStatus } from '@/src/types';
+import type {
+  ConsentTier,
+  FollowUpMethod,
+  FollowUpRequestStatus,
+  FollowUpTiming,
+  SessionStatus,
+} from '@/src/types';
 
 export function formatTimestamp(iso: string | null | undefined): string {
   if (!iso) {
@@ -53,8 +59,12 @@ export function formatNumber(value: number): string {
 
 export function statusLabel(status: SessionStatus): string {
   switch (status) {
+    case 'pending_after':
+      return 'Pending After Photo';
     case 'pending_consent':
-      return 'Pending';
+      return 'Pending Consent';
+    case 'ready_to_publish':
+      return 'Ready to Publish';
     case 'published':
       return 'Published';
     case 'declined':
@@ -65,6 +75,55 @@ export function statusLabel(status: SessionStatus): string {
       return 'Draft';
     default:
       return 'Session';
+  }
+}
+
+export function followUpMethodLabel(method: FollowUpMethod): string {
+  switch (method) {
+    case 'patient_link':
+      return 'Patient Selfie Link';
+    case 'follow_up_visit':
+      return 'Future Follow-up Visit';
+    case 'not_needed':
+      return 'No Follow-up Scheduled';
+    default:
+      return 'Follow-up';
+  }
+}
+
+export function followUpTimingLabel(timing: FollowUpTiming): string {
+  switch (timing) {
+    case '3_days':
+      return '3 Days';
+    case '1_week':
+      return '1 Week';
+    case '2_weeks':
+      return '2 Weeks';
+    case '1_month':
+      return '1 Month';
+    default:
+      return 'Later';
+  }
+}
+
+export function followUpStatusLabel(status: FollowUpRequestStatus): string {
+  switch (status) {
+    case 'scheduled':
+      return 'Scheduled';
+    case 'sent':
+      return 'Link Sent';
+    case 'opened':
+      return 'Opened';
+    case 'completed':
+      return 'Completed';
+    case 'expired':
+      return 'Expired';
+    case 'cancelled':
+      return 'Cancelled';
+    case 'not_scheduled':
+      return 'Not Scheduled';
+    default:
+      return 'Pending';
   }
 }
 
