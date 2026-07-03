@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DiscoverFeed } from '@/src/components/discover-feed';
 import {
-  ScreenScroll,
   SectionCard,
   StatCard,
   StatusPill,
@@ -14,18 +15,41 @@ import { colors, fonts, spacing, typography } from '@/src/theme';
 import { formatCompactDate, formatNumber } from '@/src/utils/format';
 
 export default function HomeScreen() {
+  const role = useProveStore((state) => state.user?.role);
+
+  // Members land on the cross-clinic discovery feed; providers keep the dashboard.
+  if (role === 'member') {
+    return <DiscoverFeed />;
+  }
+
+  return <ProviderDashboard />;
+}
+
+function ProviderDashboard() {
   const router = useRouter();
   const practice = useProveStore((state) => state.practice);
   const practiceStats = useProveStore((state) => state.practiceStats);
   const sessions = useProveStore((state) => state.sessions);
   const bootstrap = useProveStore((state) => state.bootstrap);
+  const refreshSessions = useProveStore((state) => state.refreshSessions);
+  const refreshPracticeStats = useProveStore((state) => state.refreshPracticeStats);
   const isBootstrapping = useProveStore((state) => state.isBootstrapping);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!practice) {
       void bootstrap().catch(() => {});
     }
   }, [bootstrap, practice]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([refreshSessions(), refreshPracticeStats()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshSessions, refreshPracticeStats]);
 
   const publishedCount =
     practiceStats?.totalPublished ??
@@ -39,68 +63,89 @@ export default function HomeScreen() {
     practiceStats?.profileViewsTotal ?? sessions.reduce((sum, session) => sum + session.pageViews, 0);
 
   return (
-    <ScreenScroll contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.greeting}>Good afternoon</Text>
-        <Text style={styles.subheading}>
-          {practice ? `${practice.name} · ${practice.location}` : 'Loading practice details…'}
-        </Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.staticTop}>
+        <View style={styles.header}>
+          <Text style={styles.greeting}>Good afternoon</Text>
+          <Text style={styles.subheading}>
+            {practice ? `${practice.name} · ${practice.location}` : 'Loading practice details…'}
+          </Text>
+        </View>
+
+        <View style={styles.statRow}>
+          <StatCard value={String(publishedCount)} label="Published" trend="Live on site" />
+          <StatCard value={String(pendingCount)} label="Pending" trend="Needs follow-through" />
+          <StatCard value={formatNumber(totalViews)} label="Profile Views" trend="All time" />
+        </View>
+
+        <View style={styles.sectionHeading}>
+          <Text style={styles.sectionTitle}>All Sessions</Text>
+          <Text style={styles.sectionCount}>
+            {isBootstrapping ? 'Refreshing…' : `${sessions.length} total`}
+          </Text>
+        </View>
       </View>
 
-      <View style={styles.statRow}>
-        <StatCard value={String(publishedCount)} label="Published" trend="Live on site" />
-        <StatCard value={String(pendingCount)} label="Pending" trend="Needs follow-through" />
-        <StatCard value={formatNumber(totalViews)} label="Profile Views" trend="All time" />
-      </View>
-
-      <View style={styles.sectionHeading}>
-        <Text style={styles.sectionTitle}>All Sessions</Text>
-        <Text style={styles.sectionCount}>
-          {isBootstrapping ? 'Refreshing…' : `${sessions.length} total`}
-        </Text>
-      </View>
-
-      <SectionCard style={styles.sessionList}>
-        {sessions.length > 0 ? (
-          sessions.map((session, index) => (
-            <Pressable
-              key={session.id}
-              onPress={() => router.push(`/session/${session.id}`)}
-              style={[styles.sessionRow, index < sessions.length - 1 && styles.sessionRowBorder]}>
-              <View style={styles.sessionLeft}>
-                <View style={styles.avatarBadge}>
-                  <Text style={styles.avatarText}>{session.patientInitials}</Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void onRefresh()}
+            tintColor={colors.copper}
+          />
+        }>
+        <SectionCard style={styles.sessionList}>
+          {sessions.length > 0 ? (
+            sessions.map((session, index) => (
+              <Pressable
+                key={session.id}
+                onPress={() => router.push(`/session/${session.id}`)}
+                style={[styles.sessionRow, index < sessions.length - 1 && styles.sessionRowBorder]}>
+                <View style={styles.sessionLeft}>
+                  <View style={styles.avatarBadge}>
+                    <Text style={styles.avatarText}>{session.patientInitials}</Text>
+                  </View>
+                  <View style={styles.sessionMeta}>
+                    <Text style={styles.sessionTitle}>{session.treatment}</Text>
+                    <Text style={styles.sessionSubtitle}>
+                      {formatCompactDate(session.publishedAt ?? session.capturedAt)} · {session.photos.length}{' '}
+                      {session.photos.length === 1 ? 'photo' : 'photos'}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.sessionMeta}>
-                  <Text style={styles.sessionTitle}>{session.treatment}</Text>
-                  <Text style={styles.sessionSubtitle}>
-                    {formatCompactDate(session.publishedAt ?? session.capturedAt)} · {session.photos.length}{' '}
-                    {session.photos.length === 1 ? 'photo' : 'photos'}
-                  </Text>
+                <View style={styles.sessionRight}>
+                  <StatusPill status={session.status} />
+                  <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
                 </View>
-              </View>
-              <View style={styles.sessionRight}>
-                <StatusPill status={session.status} />
-                <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
-              </View>
-            </Pressable>
-          ))
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>No sessions yet</Text>
-            <Text style={styles.emptyText}>
-              Create your first before-and-after entry to start populating the practice gallery.
-            </Text>
-          </View>
-        )}
-      </SectionCard>
-    </ScreenScroll>
+              </Pressable>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>No sessions yet</Text>
+              <Text style={styles.emptyText}>
+                Create your first before-and-after entry to start populating the practice gallery.
+              </Text>
+            </View>
+          )}
+        </SectionCard>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.bg,
+  },
+  staticTop: {
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
     gap: spacing.lg,
+    paddingBottom: spacing.md,
   },
   header: {
     gap: spacing.xs,
@@ -131,6 +176,13 @@ const styles = StyleSheet.create({
   sectionCount: {
     ...typography.bodyXs,
     color: colors.textLight,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
   },
   sessionList: {
     paddingVertical: 4,

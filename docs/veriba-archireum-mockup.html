@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veriba — The Archireum Pass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* warmed canvas — plaster & cream, not gray */
+    --bg:#F0EBE4; --bgDeep:#E9E2D8; --card:#FFFFFF; --input:#F6F2EC;
+    --copper:#B5672D; --copperLight:#C8844E; --teal:#2D4F5E; --tealLight:#3A6577; --brown:#7A4E2D;
+    --text:#211D18; --textMid:#5A5650; --textLight:#9B958D;
+    --border:#DFD8CD; --borderLight:#EAE4DA;
+    --success:#3D8B5E; --successBg:#EDF5F0;
+    --display:'Cormorant Garamond',serif; --body:'DM Sans',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:#E5DFD5;font-family:var(--body);color:var(--text);padding:64px 24px 90px;
+    background-image:radial-gradient(circle at 30% 0%,#F0EBE2,#DDD5C8);}
+  .page-head{max-width:1180px;margin:0 auto 16px;text-align:center;}
+  .page-head .over{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--textLight);font-weight:600;}
+  .page-head h1{font-family:var(--display);font-weight:300;font-size:52px;letter-spacing:-1px;color:#23201c;margin-top:10px;}
+  .page-head h1 b{font-weight:500;color:var(--copper);font-style:italic;}
+  .page-head p{max-width:640px;margin:16px auto 0;color:var(--textMid);font-size:14.5px;line-height:1.7;}
+  .rail{max-width:1320px;margin:56px auto 0;display:flex;gap:38px;flex-wrap:wrap;justify-content:center;}
+  .frame-wrap{width:300px;}
+  .frame-cap{text-align:center;margin-bottom:16px;}
+  .frame-cap .n{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--textLight);font-weight:600;}
+  .frame-cap .t{font-family:var(--display);font-size:21px;font-weight:500;color:#23201c;margin-top:3px;}
+  .frame-cap .d{font-size:11.5px;color:var(--textMid);margin-top:6px;line-height:1.5;min-height:34px;}
+
+  .phone{width:300px;height:648px;background:#14110D;border-radius:44px;padding:8px;
+    box-shadow:0 30px 70px rgba(46,35,22,.35),0 6px 16px rgba(0,0,0,.16);position:relative;}
+  .screen{width:100%;height:100%;background:var(--bg);border-radius:36px;overflow:hidden;position:relative;display:flex;flex-direction:column;}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:112px;height:24px;background:#14110D;border-radius:0 0 15px 15px;z-index:60;}
+  .statusbar{height:34px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 3px;font-size:10.5px;font-weight:600;color:var(--text);flex-shrink:0;z-index:50;}
+  .statusbar.onimg{color:#fff;position:absolute;top:0;left:0;right:0;text-shadow:0 1px 3px rgba(0,0,0,.35);}
+  .body{flex:1;overflow:hidden;position:relative;}
+  .scroll{position:absolute;inset:0;overflow:hidden;}
+
+  .tabbar{height:58px;background:rgba(255,253,250,.96);backdrop-filter:blur(10px);border-top:1px solid var(--borderLight);display:flex;align-items:center;justify-content:space-around;flex-shrink:0;padding-bottom:3px;z-index:40;}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--textLight);font-size:8px;font-weight:600;letter-spacing:.2px;flex:1;}
+  .tab.active{color:var(--copper);}
+  .tab svg{width:20px;height:20px;}
+
+  /* ---------- Explore ---------- */
+  .feedhead{display:flex;align-items:baseline;gap:9px;padding:6px 14px 10px;}
+  .wordmark{font-family:var(--display);font-weight:600;font-size:25px;letter-spacing:.5px;color:#23201c;line-height:1;}
+  .explore{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--textLight);font-weight:600;}
+  .filters{display:flex;gap:7px;padding:0 14px 10px;overflow:hidden;}
+  .fc{font-size:11px;font-weight:600;padding:6px 12px;border-radius:999px;border:1px solid var(--border);color:var(--textMid);background:rgba(255,255,255,.65);white-space:nowrap;}
+  .fc.on{background:var(--text);color:#FDFBF7;border-color:var(--text);}
+
+  .mosaic{display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:93px;gap:2px;padding:0 2px;}
+  .cell{position:relative;overflow:hidden;background:linear-gradient(135deg,#D8CCBB,#B49A7E);}
+  .cell img{width:100%;height:100%;object-fit:cover;display:block;}
+  .cell.hero{grid-column:span 2;grid-row:span 2;}
+  .cell .scrim{position:absolute;inset:0;background:linear-gradient(to top,rgba(24,16,9,.72) 0%,rgba(24,16,9,.12) 40%,transparent 58%);}
+  .cell .lab{position:absolute;left:9px;right:9px;bottom:8px;color:#fff;}
+  .cell .lab .tx{font-family:var(--display);font-style:italic;font-weight:500;font-size:16px;letter-spacing:.2px;text-shadow:0 1px 4px rgba(0,0,0,.45);}
+  .cell .lab .clin{font-size:8px;letter-spacing:1.4px;text-transform:uppercase;opacity:.9;font-weight:600;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,.5);}
+  .anim .aft{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .anim .bef{position:absolute;inset:0;overflow:hidden;width:100%;animation:sweep 6.5s ease-in-out infinite;}
+  .anim .bef img{width:100%;height:100%;object-fit:cover;filter:grayscale(.4) sepia(.08) brightness(.93) contrast(.97);}
+  .anim .swl{position:absolute;top:0;bottom:0;right:0;width:2px;background:rgba(255,255,255,.92);}
+  .anim .swl::after{content:'';position:absolute;top:50%;left:50%;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.9);transform:translate(-50%,-50%);box-shadow:0 1px 5px rgba(0,0,0,.28);}
+  @keyframes sweep{0%,10%{width:100%}44%,56%{width:0%}90%,100%{width:100%}}
+  .autotag{position:absolute;top:8px;left:8px;display:flex;align-items:center;gap:4px;background:rgba(24,16,9,.45);backdrop-filter:blur(3px);color:#fff;font-size:7px;font-weight:700;letter-spacing:1.2px;padding:3px 7px;border-radius:5px;}
+  .autotag i{width:4px;height:4px;border-radius:50%;background:#fff;display:inline-block;}
+
+  /* the editorial interlude — a museum plaque inside the feed */
+  .interlude{padding:26px 0 24px;text-align:center;background:var(--bg);}
+  .interlude .archimg{width:172px;height:196px;margin:0 auto;border-radius:86px 86px 10px 10px;overflow:hidden;position:relative;
+    box-shadow:0 18px 34px rgba(74,52,30,.22);}
+  .interlude .archimg img{width:100%;height:100%;object-fit:cover;}
+  .interlude .cap{margin-top:15px;font-family:var(--display);font-style:italic;font-weight:500;font-size:17px;color:#2A251E;}
+  .interlude .cap em{color:var(--copper);}
+  .interlude .sub{margin-top:5px;font-size:8px;letter-spacing:2.4px;text-transform:uppercase;color:var(--textLight);font-weight:600;}
+  .interlude .rule{width:26px;height:1px;background:var(--copper);opacity:.5;margin:13px auto 0;}
+
+  /* ---------- Post detail ---------- */
+  .detailbg{position:absolute;inset:0;background:var(--bg);}
+  .archhero{margin:52px 13px 0;height:352px;border-radius:137px 137px 18px 18px;overflow:hidden;position:relative;
+    box-shadow:0 26px 48px rgba(74,52,30,.28);}
+  .archhero .aft{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .archhero .befwrap{position:absolute;inset:0;overflow:hidden;width:46%;}
+  .archhero .befwrap img{height:100%;width:274px;object-fit:cover;filter:grayscale(.4) sepia(.08) brightness(.93);}
+  .archhero .handle{position:absolute;top:0;bottom:0;left:46%;width:2px;background:#fff;}
+  .archhero .knob{position:absolute;top:52%;left:46%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:var(--teal);}
+  .archhero .knob svg{width:14px;height:14px;}
+  .archhero .lbl{position:absolute;bottom:10px;font-size:7.5px;font-weight:700;letter-spacing:1.2px;color:#fff;background:rgba(24,16,9,.45);padding:2px 8px;border-radius:5px;}
+  .archhero .lbl.b{left:12px;}.archhero .lbl.a{right:12px;}
+  .floatback{position:absolute;top:44px;left:22px;z-index:30;width:32px;height:32px;border-radius:50%;background:rgba(240,235,228,.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .floatback svg{width:16px;height:16px;}
+  .dtitle{font-family:var(--display);font-weight:500;font-size:27px;text-align:center;margin-top:20px;color:#241F19;}
+  .dtitle em{font-style:italic;color:var(--copper);}
+  .dsub{font-family:var(--display);font-style:italic;font-size:13.5px;text-align:center;color:var(--textMid);margin-top:4px;}
+  .dclinic{margin-top:5px;text-align:center;font-size:8.5px;letter-spacing:2.4px;text-transform:uppercase;color:var(--textLight);font-weight:600;}
+  .custody{display:flex;justify-content:center;gap:7px;margin:16px 15px 0;align-items:center;}
+  .cword{display:flex;align-items:center;gap:5px;font-size:8px;font-weight:700;letter-spacing:1.6px;color:var(--success);text-transform:uppercase;
+    border:1px solid #D6E8DD;background:rgba(237,245,240,.55);border-radius:999px;padding:5px 10px;}
+  .cword svg{width:10px;height:10px;}
+  .ctaRow{display:flex;gap:8px;padding:18px 15px 0;}
+  .btn{flex:1;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:7px;font-size:12.5px;font-weight:700;}
+  .btn svg{width:15px;height:15px;}
+  .btn.primary{background:linear-gradient(120deg,var(--copper),var(--brown) 70%,var(--teal));color:#fff;box-shadow:0 10px 22px rgba(181,103,45,.32);}
+  .btn.ghost{background:rgba(255,255,255,.8);border:1px solid var(--border);color:var(--text);}
+
+  /* ---------- Login ---------- */
+  .loginarch{margin:64px auto 0;width:208px;height:230px;border-radius:104px 104px 14px 14px;background:var(--bgDeep);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;
+    box-shadow:inset 0 2px 14px rgba(74,52,30,.08);}
+  .loginarch::before{content:'';position:absolute;inset:9px;border-radius:95px 95px 9px 9px;border:1px solid rgba(181,103,45,.22);}
+  .loginarch .lg{font-family:var(--display);font-weight:400;font-size:44px;color:var(--copper);letter-spacing:-1px;}
+  .loginarch .by{font-size:8px;letter-spacing:3px;color:var(--textLight);font-weight:600;}
+  .logintag{font-family:var(--display);font-style:italic;text-align:center;font-size:15px;color:var(--textMid);margin-top:18px;line-height:1.5;}
+  .formcard{margin:20px 15px 0;background:rgba(255,255,255,.85);border:1px solid var(--borderLight);border-radius:20px;padding:14px;
+    box-shadow:0 16px 34px rgba(74,52,30,.12);}
+  .seg{display:flex;background:var(--input);border-radius:11px;padding:3px;margin-bottom:10px;}
+  .seg div{flex:1;text-align:center;font-size:11px;font-weight:600;color:var(--textMid);padding:8px 4px;border-radius:8px;}
+  .seg div.on{background:var(--text);color:#FDFBF7;box-shadow:0 2px 5px rgba(0,0,0,.18);}
+  .inp{height:42px;border:1px solid var(--border);background:var(--input);border-radius:11px;display:flex;align-items:center;padding:0 13px;color:var(--textLight);font-size:12px;margin-bottom:8px;}
+  .cta{height:46px;border-radius:12px;background:linear-gradient(120deg,var(--copper),var(--brown) 70%,var(--teal));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;box-shadow:0 10px 22px rgba(181,103,45,.3);}
+
+  .foot{max-width:760px;margin:70px auto 0;text-align:center;color:var(--textMid);font-size:13px;line-height:1.8;}
+  .foot b{color:var(--text);}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="over">Veriba · Design Direction 02</div>
+  <h1>The <b>Archireum</b> pass</h1>
+  <p>Same tokens, new discipline: a warmed plaster canvas instead of gray, the arch as Veriba's
+  recurring signature shape, one dominant subject per screen, and serif captions set like museum
+  plaques. Copper and teal stay the only two saturated colors in the system.</p>
+</div>
+
+<div class="rail">
+
+  <!-- 01 Explore -->
+  <div class="frame-wrap">
+    <div class="frame-cap"><div class="n">01 · Explore</div><div class="t">Warmed canvas + interlude</div>
+      <div class="d">The grid stays; the field behind it turns cream. Every 2–3 blocks, an arch-framed editorial moment interrupts the mosaic.</div></div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span>5G · 100%</span></div>
+      <div class="body"><div class="scroll">
+        <div class="feedhead"><div class="wordmark">Veriba</div><div class="explore">Explore</div></div>
+        <div class="filters"><span class="fc on">For you</span><span class="fc">Lip filler</span><span class="fc">Botox</span><span class="fc">Laser</span><span class="fc">Micro…</span></div>
+        <div class="mosaic">
+          <div class="cell hero anim">
+            <img class="aft" src="https://i.pravatar.cc/600?img=1">
+            <div class="bef"><img src="https://i.pravatar.cc/600?img=15"><div class="swl"></div></div>
+            <div class="scrim"></div>
+            <div class="autotag"><i></i>BEFORE → AFTER</div>
+            <div class="lab"><div class="tx">Lip filler</div><div class="clin">Maison Derm</div></div>
+          </div>
+          <div class="cell"><img src="https://i.pravatar.cc/300?img=4"></div>
+          <div class="cell"><img src="https://i.pravatar.cc/300?img=11"></div>
+          <div class="cell"><img src="https://i.pravatar.cc/300?img=13"></div>
+          <div class="cell"><img src="https://i.pravatar.cc/300?img=6"></div>
+          <div class="cell"><img src="https://i.pravatar.cc/300?img=22"></div>
+        </div>
+        <div class="interlude">
+          <div class="archimg"><img src="https://i.pravatar.cc/400?img=26"></div>
+          <div class="cap">Chin filler · <em>six weeks</em></div>
+          <div class="sub">Aster · Newport Beach</div>
+          <div class="rule"></div>
+        </div>
+        <div class="mosaic">
+          <div class="cell"><img src="https://i.pravatar.cc/300?img=9"></div>
+          <div class="cell"><img src="https://i.pravatar.cc/300?img=20"></div>
+          <div class="cell"><img src="https://i.pravatar.cc/300?img=31"></div>
+        </div>
+      </div></div>
+      <div class="tabbar">
+        <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 1 2-5z"/></svg>Explore</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Inbox</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Saved</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Account</div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- 02 Post detail -->
+  <div class="frame-wrap">
+    <div class="frame-cap"><div class="n">02 · Post detail</div><div class="t">The image under the arch</div>
+      <div class="d">The comparison becomes the monument: arch-masked, floating on cream, drag slider intact. Type is centered like a plaque beneath it.</div></div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="body"><div class="scroll">
+        <div class="detailbg"></div>
+        <div class="statusbar" style="position:relative;z-index:5"><span>9:41</span><span>5G · 100%</span></div>
+        <div class="floatback"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 6-6 6 6 6"/></svg></div>
+        <div class="archhero">
+          <img class="aft" src="https://i.pravatar.cc/700?img=1">
+          <div class="befwrap"><img src="https://i.pravatar.cc/700?img=15"></div>
+          <div class="handle"></div>
+          <div class="knob"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6-4 6 4 6M15 6l4 6-4 6"/></svg></div>
+          <div class="lbl b">BEFORE</div><div class="lbl a">AFTER</div>
+        </div>
+        <div class="dtitle">Lip filler · <em>1 ml</em></div>
+        <div class="dsub">Result at six weeks</div>
+        <div class="dclinic">Maison Derm · Newport Beach</div>
+        <div class="custody">
+          <span class="cword"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Captured</span>
+          <span class="cword"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Consented</span>
+          <span class="cword"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Verified</span>
+        </div>
+        <div class="ctaRow">
+          <div class="btn ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Save</div>
+          <div class="btn primary">Book consult</div>
+        </div>
+      </div></div>
+    </div></div>
+  </div>
+
+  <!-- 03 Login -->
+  <div class="frame-wrap">
+    <div class="frame-cap"><div class="n">03 · Welcome</div><div class="t">The arch as brand</div>
+      <div class="d">The circle halo becomes Veriba's arch — a doorway, not a badge. Everything else quiets down around it.</div></div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span>5G · 100%</span></div>
+      <div class="body"><div class="scroll">
+        <div class="loginarch">
+          <div class="lg">Veriba</div>
+          <div class="by">BY AGENCĒ</div>
+        </div>
+        <div class="logintag">Verified before &amp; after photos.<br>Real results. Real trust.</div>
+        <div class="formcard">
+          <div class="seg"><div class="on">I'm exploring results</div><div>I'm a clinic</div></div>
+          <div class="inp">Full name</div>
+          <div class="inp">Email</div>
+          <div class="inp">Password</div>
+          <div class="cta">Create Account</div>
+        </div>
+      </div></div>
+    </div></div>
+  </div>
+
+</div>
+
+<div class="foot">
+  <b>What changed, precisely:</b> background #EDEDEB → #F0EBE4 (gray → plaster) · arch mask
+  (radius = half width) on the detail hero, interlude frames, and the login mark · detail
+  typography centered, serif, with the copper italic accent · custody strip lightened to
+  hairline pills · warm shadows (brown-tinted, never black) · befores muted with the same
+  warm-gray wash the app already uses. Copper and teal remain the only saturated colors.
+</div>
+
+</body>
+</html>

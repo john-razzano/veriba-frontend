@@ -1,0 +1,178 @@
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter, type Href } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { BeforeAfterSlider } from '@/src/components/before-after-slider';
+import { MOCK_INBOX_ACTIVITY, type FeedCase, type InboxActivity } from '@/src/data/mock-feed';
+import { loadFeedCases } from '@/src/lib/gallery';
+import { colors, fonts, spacing, typography } from '@/src/theme';
+
+const ACTIVITY_ICONS: Record<InboxActivity['icon'], { name: string; bg: string; tint: string }> = {
+  eye: { name: 'eye-outline', bg: colors.warningBg, tint: colors.copper },
+  heart: { name: 'heart-outline', bg: '#FBECEC', tint: colors.error },
+  chat: { name: 'chatbubble-outline', bg: colors.successBg, tint: colors.success },
+};
+
+/**
+ * Consumer inbox (mockup C3): provider posts awaiting the patient's approval,
+ * followed by an activity list.
+ */
+export default function InboxScreen() {
+  const router = useRouter();
+  // Stand-in approval request until the in-app approvals API exists (§7):
+  // uses the most recent live gallery case.
+  const [reviewCase, setReviewCase] = useState<FeedCase | null>(null);
+
+  useEffect(() => {
+    loadFeedCases()
+      .then((all) => setReviewCase(all[0] ?? null))
+      .catch(() => {});
+  }, []);
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <View style={styles.headRow}>
+          <Text style={styles.heading}>Inbox</Text>
+          <Ionicons name="notifications-outline" size={20} color={colors.textMid} />
+        </View>
+
+        {reviewCase ? (
+          <>
+            <Text style={styles.groupLabel}>NEEDS YOUR REVIEW</Text>
+            <LinearGradient
+              colors={[colors.teal, colors.tealLight]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.reviewCard}>
+              <BeforeAfterSlider
+                beforeUri={reviewCase.beforeUri}
+                afterUri={reviewCase.afterUri}
+                height={110}
+              />
+              <View style={styles.reviewBody}>
+                <Text style={styles.eyebrow}>APPROVAL REQUESTED</Text>
+                <Text style={styles.reviewTitle}>
+                  {reviewCase.clinic} wants to publish your before & after
+                </Text>
+                <Text style={styles.reviewText}>
+                  Your provider created a post from your {reviewCase.treatment.toLowerCase()}{' '}
+                  session. Review how it looks and set your privacy level before it goes live.
+                </Text>
+                <Pressable
+                  onPress={() => router.push(`/case/${reviewCase.id}` as Href)}
+                  style={styles.reviewGo}>
+                  <Text style={styles.reviewGoText}>Review & respond</Text>
+                  <Ionicons name="arrow-forward" size={13} color={colors.teal} />
+                </Pressable>
+              </View>
+            </LinearGradient>
+          </>
+        ) : null}
+
+        <Text style={styles.groupLabel}>EARLIER</Text>
+        {MOCK_INBOX_ACTIVITY.map((item) => {
+          const icon = ACTIVITY_ICONS[item.icon];
+          return (
+            <View key={item.id} style={styles.actItem}>
+              <View style={[styles.actIcon, { backgroundColor: icon.bg }]}>
+                <Ionicons name={icon.name as never} size={17} color={icon.tint} />
+              </View>
+              <View style={styles.actText}>
+                <Text style={styles.actLine}>{item.text}</Text>
+                <Text style={styles.actTime}>{item.timeAgo}</Text>
+              </View>
+            </View>
+          );
+        })}
+        <View style={{ height: spacing.xl }} />
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: colors.bg },
+  headRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+    paddingTop: 6,
+    paddingBottom: 12,
+  },
+  heading: { fontFamily: fonts.display.medium, fontSize: 24, color: '#23201c' },
+  groupLabel: {
+    ...typography.label,
+    color: colors.textLight,
+    paddingHorizontal: spacing.md,
+    paddingTop: 4,
+    paddingBottom: 8,
+  },
+  reviewCard: {
+    marginHorizontal: spacing.md,
+    marginBottom: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: colors.teal,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  reviewBody: { padding: 15, paddingTop: 13 },
+  eyebrow: {
+    fontFamily: fonts.body.semibold,
+    fontSize: 8.5,
+    letterSpacing: 1.5,
+    color: 'rgba(255,255,255,0.85)',
+  },
+  reviewTitle: {
+    fontFamily: fonts.display.medium,
+    fontSize: 19,
+    lineHeight: 23,
+    color: colors.white,
+    marginTop: 5,
+  },
+  reviewText: {
+    fontFamily: fonts.body.regular,
+    fontSize: 11,
+    lineHeight: 16.5,
+    color: 'rgba(255,255,255,0.86)',
+    marginTop: 7,
+  },
+  reviewGo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.white,
+    borderRadius: 999,
+    paddingHorizontal: 15,
+    paddingVertical: 9,
+    marginTop: 12,
+  },
+  reviewGoText: { fontFamily: fonts.body.semibold, fontSize: 11.5, color: colors.teal },
+  actItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  actIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actText: { flex: 1 },
+  actLine: { fontFamily: fonts.body.regular, fontSize: 12, lineHeight: 17, color: colors.text },
+  actTime: { ...typography.bodyXs, color: colors.textLight, marginTop: 2 },
+});

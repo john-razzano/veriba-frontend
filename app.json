@@ -14,7 +14,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.jrazzano.proveagence"
+      "bundleIdentifier": "com.jrazzano.proveagence",
+      "buildNumber": "2"
     },
     "android": {
       "adaptiveIcon": {
@@ -29,7 +30,8 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      "package": "com.jrazzano.proveagence"
+      "package": "com.jrazzano.proveagence",
+      "versionCode": 2
     },
     "web": {
       "bundler": "metro",
@@ -52,7 +54,8 @@
           "locationWhenInUsePermission": "Veriba records location at capture time to verify photo chain of custody."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true

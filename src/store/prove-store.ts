@@ -69,9 +69,10 @@ type LoginPayload = {
 
 type RegisterPayload = LoginPayload & {
   name: string;
-  practiceName: string;
-  practiceLocation: string;
-  practiceWebsite: string;
+  role?: 'provider' | 'member';
+  practiceName?: string;
+  practiceLocation?: string;
+  practiceWebsite?: string;
 };
 
 interface ProveStore {
@@ -455,6 +456,7 @@ export const useProveStore = create<ProveStore>((set, get) => ({
     email,
     password,
     name,
+    role = 'provider',
     practiceName,
     practiceLocation,
     practiceWebsite,
@@ -467,18 +469,21 @@ export const useProveStore = create<ProveStore>((set, get) => ({
     try {
       console.log('[store.register] start', {
         email: email.trim(),
+        role,
       });
       const response = await registerRequest({
         email: email.trim(),
         password,
         name: name.trim(),
-        practice_name: practiceName.trim(),
-        practice_location: practiceLocation.trim(),
-        practice_website: practiceWebsite.trim() || undefined,
+        role,
+        practice_name: role === 'provider' ? practiceName?.trim() : undefined,
+        practice_location: role === 'provider' ? practiceLocation?.trim() : undefined,
+        practice_website:
+          role === 'provider' ? practiceWebsite?.trim() || undefined : undefined,
       });
       console.log('[store.register] token response received', {
         userId: response.user.id,
-        practiceId: response.practice.id,
+        practiceId: response.practice?.id ?? null,
       });
 
       await saveTokens({
@@ -494,7 +499,7 @@ export const useProveStore = create<ProveStore>((set, get) => ({
         tokenType: response.token_type,
         authProvider: 'email',
         user: mapUser(response.user, 'email'),
-        practice: mapPractice(response.practice, get().practice),
+        practice: response.practice ? mapPractice(response.practice, get().practice) : null,
         isAuthenticated: true,
       });
       console.log('[store.register] auth state updated');
@@ -573,8 +578,19 @@ export const useProveStore = create<ProveStore>((set, get) => ({
     });
 
     try {
-      const [userResponse, practiceResponse, statsResponse, sessionListResult] = await Promise.all([
-        getCurrentUser(),
+      const userResponse = await getCurrentUser();
+
+      if (userResponse.role === 'member') {
+        set({
+          isAuthenticated: true,
+          user: mapUser(userResponse, get().authProvider ?? 'email'),
+          practice: null,
+          practiceStats: null,
+        });
+        return;
+      }
+
+      const [practiceResponse, statsResponse, sessionListResult] = await Promise.all([
         getCurrentPractice(),
         getPracticeStats(),
         listSessions().catch((err) => {

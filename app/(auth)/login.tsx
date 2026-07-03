@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppInput, GradientButton, OutlineButton } from '@/src/components/ui';
@@ -10,6 +10,7 @@ import { useProveStore } from '@/src/store/prove-store';
 import { colors, fonts, gradients, radii, shadows, spacing, typography } from '@/src/theme';
 
 type AuthMode = 'login' | 'register';
+type AccountRole = 'member' | 'provider';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function LoginScreen() {
   const isAuthenticating = useProveStore((state) => state.isAuthenticating);
   const authError = useProveStore((state) => state.authError);
   const [mode, setMode] = useState<AuthMode>('login');
+  const [role, setRole] = useState<AccountRole>('member');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
@@ -31,8 +33,8 @@ export default function LoginScreen() {
     password.length >= 8 &&
     (mode === 'login' ||
       (name.trim().length > 0 &&
-        practiceName.trim().length > 0 &&
-        practiceLocation.trim().length > 0));
+        (role === 'member' ||
+          (practiceName.trim().length > 0 && practiceLocation.trim().length > 0))));
 
   const handleSubmit = async () => {
     try {
@@ -47,7 +49,15 @@ export default function LoginScreen() {
       if (mode === 'login') {
         await login({ email, password });
       } else {
-        await register({ email, password, name, practiceName, practiceLocation, practiceWebsite });
+        await register({
+          email,
+          password,
+          name,
+          role,
+          practiceName,
+          practiceLocation,
+          practiceWebsite,
+        });
       }
       console.log('[auth.screen] auth action resolved, navigating');
       router.replace('/(tabs)');
@@ -76,24 +86,46 @@ export default function LoginScreen() {
         <View style={styles.formCard}>
           {mode === 'register' ? (
             <>
+              <View style={styles.roleSeg}>
+                {(
+                  [
+                    ['member', "I'm exploring results"],
+                    ['provider', "I'm a clinic"],
+                  ] as const
+                ).map(([value, label]) => (
+                  <Pressable
+                    key={value}
+                    onPress={() => setRole(value)}
+                    style={[styles.roleSegItem, role === value && styles.roleSegItemOn]}>
+                    <Text
+                      style={[styles.roleSegText, role === value && styles.roleSegTextOn]}>
+                      {label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
               <AppInput value={name} onChangeText={setName} placeholder="Full name" />
-              <AppInput
-                value={practiceName}
-                onChangeText={setPracticeName}
-                placeholder="Practice name"
-              />
-              <AppInput
-                value={practiceLocation}
-                onChangeText={setPracticeLocation}
-                placeholder="Practice location"
-              />
-              <AppInput
-                value={practiceWebsite}
-                onChangeText={setPracticeWebsite}
-                placeholder="Practice website"
-                autoCapitalize="none"
-                keyboardType="url"
-              />
+              {role === 'provider' ? (
+                <>
+                  <AppInput
+                    value={practiceName}
+                    onChangeText={setPracticeName}
+                    placeholder="Practice name"
+                  />
+                  <AppInput
+                    value={practiceLocation}
+                    onChangeText={setPracticeLocation}
+                    placeholder="Practice location"
+                  />
+                  <AppInput
+                    value={practiceWebsite}
+                    onChangeText={setPracticeWebsite}
+                    placeholder="Practice website"
+                    autoCapitalize="none"
+                    keyboardType="url"
+                  />
+                </>
+              ) : null}
             </>
           ) : null}
 
@@ -187,6 +219,36 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     ...typography.bodyLg,
     color: colors.textMid,
+  },
+  roleSeg: {
+    flexDirection: 'row',
+    backgroundColor: colors.bgInput,
+    borderRadius: 10,
+    padding: 3,
+    marginBottom: spacing.xs,
+  },
+  roleSegItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 9,
+    borderRadius: 8,
+  },
+  roleSegItemOn: {
+    backgroundColor: colors.text,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  roleSegText: {
+    fontFamily: fonts.body.semibold,
+    fontSize: 12,
+    color: colors.textMid,
+  },
+  roleSegTextOn: {
+    color: colors.white,
   },
   formCard: {
     gap: spacing.sm,

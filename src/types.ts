@@ -92,7 +92,7 @@ export interface User {
   name: string;
   initials: string;
   avatarUrl: string | null;
-  practiceId: string;
+  practiceId: string | null;
   role: string;
   authProvider: AuthProvider;
   createdAt: string;

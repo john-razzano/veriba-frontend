@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
@@ -15,6 +16,90 @@ import { colors, fonts, radii, spacing, typography } from '@/src/theme';
 import { DEFAULT_SERVICES_OFFERED, TREATMENTS } from '@/src/types';
 
 export default function AccountScreen() {
+  const isMember = useProveStore((state) => state.user?.role === 'member');
+
+  return isMember ? <MemberAccount /> : <ProviderAccount />;
+}
+
+const MEMBER_MENU = [
+  ['grid-outline', 'My before & afters'],
+  ['bookmark-outline', 'Saved clinics'],
+  ['lock-closed-outline', 'Privacy & consent'],
+  ['settings-outline', 'Settings'],
+] as const;
+
+/** Consumer account (mockup C5). Stats are placeholders until saves/follows exist. */
+function MemberAccount() {
+  const router = useRouter();
+  const user = useProveStore((state) => state.user);
+  const logout = useProveStore((state) => state.logout);
+
+  return (
+    <ScreenScroll contentContainerStyle={styles.content}>
+      <View style={styles.memberHeader}>
+        <AvatarBadge initials={user?.initials ?? '…'} size={72} />
+        <Text style={styles.memberName}>{user?.name ?? 'Loading profile…'}</Text>
+        <View style={styles.memberPill}>
+          <Text style={styles.memberPillText}>MEMBER</Text>
+        </View>
+      </View>
+
+      <SectionCard>
+        <View style={styles.memberStats}>
+          {(
+            [
+              ['0', 'My results'],
+              ['0', 'Saved'],
+              ['0', 'Following'],
+            ] as const
+          ).map(([value, label]) => (
+            <View key={label} style={styles.memberStat}>
+              <Text style={styles.memberStatValue}>{value}</Text>
+              <Text style={styles.memberStatLabel}>{label}</Text>
+            </View>
+          ))}
+        </View>
+      </SectionCard>
+
+      <SectionCard style={styles.menuCard}>
+        {MEMBER_MENU.map(([icon, label], index) => (
+          <Pressable
+            key={label}
+            onPress={() => Alert.alert(label, 'Coming soon.')}
+            style={[styles.menuRow, index < MEMBER_MENU.length - 1 && styles.menuRowBorder]}>
+            <Ionicons name={icon} size={17} color={colors.textMid} />
+            <Text style={styles.menuLabel}>{label}</Text>
+            <Ionicons name="chevron-forward" size={15} color={colors.textLight} />
+          </Pressable>
+        ))}
+      </SectionCard>
+
+      <Pressable
+        onPress={() =>
+          Alert.alert('Provider accounts', 'Sign up with "I\'m a clinic" to publish results.')
+        }
+        style={styles.switchCard}>
+        <Ionicons name="swap-horizontal" size={21} color={colors.white} />
+        <View style={styles.switchCopy}>
+          <Text style={styles.switchTitle}>Are you a provider?</Text>
+          <Text style={styles.switchSub}>Switch to clinic mode to publish results</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={17} color={colors.white} />
+      </Pressable>
+
+      <OutlineButton
+        label="Logout"
+        onPress={() => {
+          void logout().finally(() => {
+            router.replace('/(auth)/login');
+          });
+        }}
+      />
+    </ScreenScroll>
+  );
+}
+
+function ProviderAccount() {
   const router = useRouter();
   const practice = useProveStore((state) => state.practice);
   const user = useProveStore((state) => state.user);
@@ -136,7 +221,7 @@ export default function AccountScreen() {
 
       <View style={styles.footerMeta}>
         <Text style={styles.footerText}>© 2026 Agence Studio</Text>
-        <Text style={styles.footerText}>Version 1.0 (1)</Text>
+        <Text style={styles.footerText}>Version 1.0.0 (2)</Text>
       </View>
 
       <OutlineButton
@@ -154,6 +239,87 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   content: {
     gap: spacing.lg,
+  },
+  memberHeader: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingTop: spacing.md,
+  },
+  memberName: {
+    fontFamily: fonts.display.medium,
+    fontSize: 22,
+    color: colors.text,
+  },
+  memberPill: {
+    backgroundColor: '#E5EBEE',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  memberPillText: {
+    fontFamily: fonts.body.semibold,
+    fontSize: 10,
+    letterSpacing: 1,
+    color: colors.teal,
+  },
+  memberStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  memberStat: {
+    alignItems: 'center',
+  },
+  memberStatValue: {
+    fontFamily: fonts.display.semibold,
+    fontSize: 20,
+    color: colors.text,
+  },
+  memberStatLabel: {
+    ...typography.bodyXs,
+    color: colors.textLight,
+    marginTop: 1,
+  },
+  menuCard: {
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 13,
+  },
+  menuRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderLight,
+  },
+  menuLabel: {
+    flex: 1,
+    fontFamily: fonts.body.medium,
+    fontSize: 13,
+    color: colors.text,
+  },
+  switchCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 11,
+    backgroundColor: colors.teal,
+    borderRadius: radii.lg,
+    padding: 14,
+  },
+  switchCopy: {
+    flex: 1,
+  },
+  switchTitle: {
+    fontFamily: fonts.body.semibold,
+    fontSize: 12.5,
+    color: colors.white,
+  },
+  switchSub: {
+    ...typography.bodyXs,
+    color: 'rgba(255,255,255,0.82)',
+    marginTop: 2,
   },
   profileRow: {
     flexDirection: 'row',

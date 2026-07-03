@@ -141,7 +141,13 @@ export default function PhotosStepScreen() {
     <WizardScreen
       step={2}
       continueLabel="Continue to Consent"
-      continueDisabled={!wizard.beforePhoto}
+      continueDisabled={
+        !wizard.beforePhoto ||
+        (wizard.followUpRequest.method === 'patient_link' &&
+          !afterPhoto &&
+          (!wizard.followUpRequest.patientEmail.trim() ||
+            !wizard.followUpRequest.patientFirstName.trim()))
+      }
       onContinue={() => router.push('/wizard/consent')}>
       <Text style={styles.title}>Build Before & After Pair</Text>
       <Text style={styles.subtitle}>

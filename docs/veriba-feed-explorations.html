@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veriba — Feed Explorations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F0EBE4; --bgDeep:#E9E2D8; --card:#FFFFFF; --input:#F6F2EC;
+    --copper:#B5672D; --teal:#2D4F5E; --brown:#7A4E2D;
+    --text:#211D18; --textMid:#5A5650; --textLight:#9B958D;
+    --border:#DFD8CD; --borderLight:#EAE4DA;
+    --display:'Cormorant Garamond',serif; --body:'DM Sans',sans-serif;
+    --warmShadow:0 14px 30px rgba(74,52,30,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#E5DFD5;font-family:var(--body);color:var(--text);padding:64px 24px 90px;
+    background-image:radial-gradient(circle at 30% 0%,#F0EBE2,#DDD5C8);}
+  .page-head{max-width:1180px;margin:0 auto 10px;text-align:center;}
+  .page-head .over{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--textLight);font-weight:600;}
+  .page-head h1{font-family:var(--display);font-weight:300;font-size:50px;letter-spacing:-1px;color:#23201c;margin-top:10px;}
+  .page-head h1 b{font-weight:500;color:var(--copper);font-style:italic;}
+  .page-head p{max-width:660px;margin:16px auto 0;color:var(--textMid);font-size:14.5px;line-height:1.7;}
+  .rail{max-width:1440px;margin:52px auto 0;display:flex;gap:36px;flex-wrap:wrap;justify-content:center;}
+  .frame-wrap{width:300px;}
+  .frame-cap{text-align:center;margin-bottom:16px;}
+  .frame-cap .n{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--textLight);font-weight:600;}
+  .frame-cap .t{font-family:var(--display);font-size:21px;font-weight:500;color:#23201c;margin-top:3px;}
+  .frame-cap .d{font-size:11.5px;color:var(--textMid);margin-top:6px;line-height:1.5;min-height:50px;}
+
+  .phone{width:300px;height:648px;background:#14110D;border-radius:44px;padding:8px;
+    box-shadow:0 30px 70px rgba(46,35,22,.35),0 6px 16px rgba(0,0,0,.16);position:relative;}
+  .screen{width:100%;height:100%;background:var(--bg);border-radius:36px;overflow:hidden;position:relative;display:flex;flex-direction:column;}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:112px;height:24px;background:#14110D;border-radius:0 0 15px 15px;z-index:60;}
+  .statusbar{height:34px;display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 3px;font-size:10.5px;font-weight:600;color:var(--text);flex-shrink:0;z-index:50;}
+  .statusbar.onimg{color:#fff;position:absolute;top:0;left:0;right:0;text-shadow:0 1px 3px rgba(0,0,0,.35);}
+  .body{flex:1;overflow:hidden;position:relative;}
+  .scroll{position:absolute;inset:0;overflow:hidden;}
+  .tabbar{height:58px;background:rgba(255,253,250,.96);border-top:1px solid var(--borderLight);display:flex;align-items:center;justify-content:space-around;flex-shrink:0;padding-bottom:3px;z-index:40;}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--textLight);font-size:8px;font-weight:600;flex:1;}
+  .tab.active{color:var(--copper);}
+  .tab svg{width:20px;height:20px;}
+
+  .feedhead{display:flex;align-items:baseline;gap:9px;padding:6px 16px 4px;}
+  .wordmark{font-family:var(--display);font-weight:600;font-size:25px;letter-spacing:.5px;color:#23201c;line-height:1;}
+  .explore{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--textLight);font-weight:600;}
+  .forline{padding:2px 16px 14px;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--textMid);font-weight:600;}
+  .forline em{color:var(--copper);font-style:normal;}
+
+  img{display:block;}
+  .rv{position:relative;overflow:hidden;}
+  .rv .aft{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .rv .bef{position:absolute;inset:0;overflow:hidden;width:100%;animation:sweep 6.5s ease-in-out infinite;}
+  .rv .bef img{width:100%;height:100%;object-fit:cover;filter:grayscale(.4) sepia(.08) brightness(.93);}
+  .rv .swl{position:absolute;top:0;bottom:0;right:0;width:2px;background:rgba(255,255,255,.92);}
+  .rv .swl::after{content:'';position:absolute;top:50%;left:50%;width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,.9);transform:translate(-50%,-50%);box-shadow:0 1px 5px rgba(0,0,0,.25);}
+  @keyframes sweep{0%,10%{width:100%}44%,56%{width:0%}90%,100%{width:100%}}
+  .batag{position:absolute;top:8px;left:8px;display:flex;align-items:center;gap:4px;background:rgba(24,16,9,.4);color:#fff;font-size:6.5px;font-weight:700;letter-spacing:1.2px;padding:3px 7px;border-radius:5px;z-index:4;}
+  .batag i{width:4px;height:4px;border-radius:50%;background:#fff;}
+
+  /* captions live on the canvas, not on the photo */
+  .plq .cap{font-family:var(--display);font-style:italic;font-weight:500;font-size:14.5px;color:#2A251E;}
+  .plq .cap em{color:var(--copper);}
+  .plq .sub{margin-top:3px;font-size:7.5px;letter-spacing:2.2px;text-transform:uppercase;color:var(--textLight);font-weight:600;display:flex;align-items:center;gap:5px;}
+  .plq .sub.r{justify-content:flex-end;}
+  .vd{width:10px;height:10px;border-radius:50%;background:var(--teal);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .vd svg{width:6px;height:6px;stroke:#fff;stroke-width:3;fill:none;}
+
+  /* A — gallery hang */
+  .hangblock{margin-bottom:30px;}
+  .hangimg{border-radius:4px;box-shadow:var(--warmShadow);overflow:hidden;}
+  .hang-l{margin:0 60px 0 16px;}
+  .hang-r{margin:0 16px 0 96px;}
+  .hangblock .plq{margin-top:10px;}
+  .hang-l .plq{margin-left:16px;}
+  .hang-r .plq{margin-right:16px;text-align:right;}
+
+  /* B — floating columns */
+  .cols{display:flex;gap:12px;padding:4px 14px;}
+  .col{flex:1;display:flex;flex-direction:column;gap:18px;}
+  .col.offset{padding-top:40px;}
+  .fcard .im{border-radius:8px;overflow:hidden;box-shadow:var(--warmShadow);}
+  .fcard .plq{margin-top:7px;padding:0 2px;}
+  .fcard .plq .cap{font-size:12.5px;}
+  .fcard .plq .sub{letter-spacing:1.8px;font-size:7px;}
+
+  /* C — cinema */
+  .cine{position:absolute;inset:0;display:flex;flex-direction:column;}
+  .cinestage{flex:1;position:relative;overflow:hidden;}
+  .cineplq{height:118px;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;}
+  .cineplq .cap{font-family:var(--display);font-style:italic;font-weight:500;font-size:19px;color:#2A251E;}
+  .cineplq .cap em{color:var(--copper);}
+  .cineplq .sub{font-size:8px;letter-spacing:2.4px;text-transform:uppercase;color:var(--textLight);font-weight:600;}
+  .cineplq .idx{position:absolute;right:18px;top:14px;font-family:var(--display);font-style:italic;font-size:12px;color:var(--textLight);}
+  .cineplq .rule{width:24px;height:1px;background:var(--copper);opacity:.5;margin-top:6px;}
+
+  /* D — tempo */
+  .tempohero{margin:2px 0 0;}
+  .tempohero .im{height:236px;}
+  .tempoplq{text-align:center;padding:14px 16px 6px;}
+  .tempoplq .cap{font-family:var(--display);font-style:italic;font-weight:500;font-size:16px;color:#2A251E;}
+  .tempoplq .cap em{color:var(--copper);}
+  .tempoplq .sub{margin-top:3px;font-size:7.5px;letter-spacing:2.4px;text-transform:uppercase;color:var(--textLight);font-weight:600;}
+  .tempoplq .rule{width:24px;height:1px;background:var(--copper);opacity:.5;margin:10px auto 0;}
+  .temporow{display:flex;gap:12px;padding:20px 16px 6px;}
+  .temporow .fcard{flex:1;}
+
+  .foot{max-width:820px;margin:70px auto 0;text-align:center;color:var(--textMid);font-size:13px;line-height:1.85;}
+  .foot b{color:var(--text);}
+</style>
+</head>
+<body>
+
+<div class="page-head">
+  <div class="over">Veriba · Design Direction 03</div>
+  <h1>Four ways to <b>breathe</b></h1>
+  <p>What the reference images actually run on: two colors, one subject, and emptiness doing the
+  composition. A packed 2px grid is the opposite tone. Below, four feed structures that trade
+  density for air — photos untouched (no masks, no scrims), captions set on the canvas beneath
+  them like gallery labels.</p>
+</div>
+
+<div class="rail">
+
+  <!-- A · Gallery hang -->
+  <div class="frame-wrap">
+    <div class="frame-cap"><div class="n">A · Gallery hang</div><div class="t">One column, alternating weight</div>
+      <div class="d">Every case gets its own wall. Images alternate size and alignment — large left, small right — the way a curator hangs a room. Maximum air, slowest browse.</div></div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span>5G · 100%</span></div>
+      <div class="body"><div class="scroll">
+        <div class="feedhead"><div class="wordmark">Veriba</div><div class="explore">Explore</div></div>
+        <div class="forline">For you · <em>Lip filler</em> · Botox · Laser</div>
+        <div class="hangblock">
+          <div class="hangimg hang-l rv" style="height:264px">
+            <img class="aft" src="https://i.pravatar.cc/600?img=1">
+            <div class="bef"><img src="https://i.pravatar.cc/600?img=15"><div class="swl"></div></div>
+            <div class="batag"><i></i>BEFORE → AFTER</div>
+          </div>
+          <div class="plq hang-l" style="margin-left:16px">
+            <div class="cap">Lip filler · <em>six weeks</em></div>
+            <div class="sub"><span class="vd"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>Maison Derm · Newport Beach</div>
+          </div>
+        </div>
+        <div class="hangblock">
+          <div class="hangimg hang-r" style="height:172px"><img src="https://i.pravatar.cc/400?img=4" style="width:100%;height:100%;object-fit:cover"></div>
+          <div class="plq hang-r">
+            <div class="cap">Botox · <em>forehead</em></div>
+            <div class="sub r">Oak &amp; Ivory · Irvine<span class="vd"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></div>
+          </div>
+        </div>
+        <div class="hangblock">
+          <div class="hangimg hang-l" style="height:200px"><img src="https://i.pravatar.cc/500?img=11" style="width:100%;height:100%;object-fit:cover"></div>
+        </div>
+      </div></div>
+      <div class="tabbar">
+        <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 1 2-5z"/></svg>Explore</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Inbox</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Saved</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Account</div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- B · Floating columns -->
+  <div class="frame-wrap">
+    <div class="frame-cap"><div class="n">B · Floating columns</div><div class="t">Staggered, on the canvas</div>
+      <div class="d">Two offset columns of floating cards with real gutters — the cream shows everywhere. Keeps browsing speed while every photo reads as an object, not a cell.</div></div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span>5G · 100%</span></div>
+      <div class="body"><div class="scroll">
+        <div class="feedhead"><div class="wordmark">Veriba</div><div class="explore">Explore</div></div>
+        <div class="forline">For you · <em>Lip filler</em> · Botox · Laser</div>
+        <div class="cols">
+          <div class="col">
+            <div class="fcard">
+              <div class="im rv" style="height:186px">
+                <img class="aft" src="https://i.pravatar.cc/400?img=1">
+                <div class="bef"><img src="https://i.pravatar.cc/400?img=15"><div class="swl"></div></div>
+                <div class="batag"><i></i>B → A</div>
+              </div>
+              <div class="plq"><div class="cap">Lip filler</div><div class="sub"><span class="vd"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>Maison Derm</div></div>
+            </div>
+            <div class="fcard">
+              <div class="im" style="height:142px"><img src="https://i.pravatar.cc/400?img=13" style="width:100%;height:100%;object-fit:cover"></div>
+              <div class="plq"><div class="cap">Laser</div><div class="sub"><span class="vd"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>Halo Med</div></div>
+            </div>
+            <div class="fcard">
+              <div class="im" style="height:170px"><img src="https://i.pravatar.cc/400?img=22" style="width:100%;height:100%;object-fit:cover"></div>
+            </div>
+          </div>
+          <div class="col offset">
+            <div class="fcard">
+              <div class="im" style="height:150px"><img src="https://i.pravatar.cc/400?img=4" style="width:100%;height:100%;object-fit:cover"></div>
+              <div class="plq"><div class="cap">Botox</div><div class="sub"><span class="vd"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>Oak &amp; Ivory</div></div>
+            </div>
+            <div class="fcard">
+              <div class="im" style="height:196px"><img src="https://i.pravatar.cc/400?img=6" style="width:100%;height:100%;object-fit:cover"></div>
+              <div class="plq"><div class="cap">Cheek filler</div><div class="sub"><span class="vd"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>Lumen Studio</div></div>
+            </div>
+            <div class="fcard">
+              <div class="im" style="height:120px"><img src="https://i.pravatar.cc/400?img=26" style="width:100%;height:100%;object-fit:cover"></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+      <div class="tabbar">
+        <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 1 2-5z"/></svg>Explore</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Inbox</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Saved</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Account</div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- C · Cinema -->
+  <div class="frame-wrap">
+    <div class="frame-cap"><div class="n">C · Cinema</div><div class="t">One case per screen</div>
+      <div class="d">Vertical paging: each result fills the stage, the reveal plays once, a plaque sits beneath. The closest to the reference images — and the boldest departure from a feed.</div></div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="body">
+        <div class="cine">
+          <div class="cinestage rv">
+            <img class="aft" src="https://i.pravatar.cc/700?img=1">
+            <div class="bef"><img src="https://i.pravatar.cc/700?img=15"><div class="swl"></div></div>
+            <div class="statusbar onimg"><span>9:41</span><span>5G · 100%</span></div>
+            <div class="batag" style="top:44px"><i></i>BEFORE → AFTER</div>
+          </div>
+          <div class="cineplq">
+            <div class="idx">01 / 24</div>
+            <div class="cap">Lip filler · <em>six weeks</em></div>
+            <div class="sub">Maison Derm · Newport Beach</div>
+            <div class="rule"></div>
+          </div>
+        </div>
+      </div>
+      <div class="tabbar">
+        <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 1 2-5z"/></svg>Explore</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Inbox</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Saved</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Account</div>
+      </div>
+    </div></div>
+  </div>
+
+  <!-- D · Tempo -->
+  <div class="frame-wrap">
+    <div class="frame-cap"><div class="n">D · Tempo</div><div class="t">Hero, pair, breathe, repeat</div>
+      <div class="d">A magazine rhythm: full-bleed hero with a centered plaque, then a quiet pair of floating cards, then air, then the next movement. Density and stillness take turns.</div></div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="statusbar"><span>9:41</span><span>5G · 100%</span></div>
+      <div class="body"><div class="scroll">
+        <div class="feedhead"><div class="wordmark">Veriba</div><div class="explore">Explore</div></div>
+        <div class="forline">For you · <em>Lip filler</em> · Botox · Laser</div>
+        <div class="tempohero">
+          <div class="im rv" style="height:236px">
+            <img class="aft" src="https://i.pravatar.cc/600?img=1">
+            <div class="bef"><img src="https://i.pravatar.cc/600?img=15"><div class="swl"></div></div>
+            <div class="batag"><i></i>BEFORE → AFTER</div>
+          </div>
+          <div class="tempoplq">
+            <div class="cap">Lip filler · <em>six weeks</em></div>
+            <div class="sub">Maison Derm · Newport Beach</div>
+            <div class="rule"></div>
+          </div>
+        </div>
+        <div class="temporow">
+          <div class="fcard">
+            <div class="im" style="height:128px;border-radius:8px;overflow:hidden;box-shadow:var(--warmShadow)"><img src="https://i.pravatar.cc/300?img=4" style="width:100%;height:100%;object-fit:cover"></div>
+            <div class="plq"><div class="cap" style="font-size:12px">Botox</div></div>
+          </div>
+          <div class="fcard">
+            <div class="im" style="height:128px;border-radius:8px;overflow:hidden;box-shadow:var(--warmShadow)"><img src="https://i.pravatar.cc/300?img=11" style="width:100%;height:100%;object-fit:cover"></div>
+            <div class="plq"><div class="cap" style="font-size:12px">Microneedling</div></div>
+          </div>
+        </div>
+        <div class="tempohero" style="margin-top:16px">
+          <div class="im" style="height:120px"><img src="https://i.pravatar.cc/600?img=6" style="width:100%;height:100%;object-fit:cover"></div>
+        </div>
+      </div></div>
+      <div class="tabbar">
+        <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="m15 9-2 5-4 1 2-5z"/></svg>Explore</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Search</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Inbox</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Saved</div>
+        <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Account</div>
+      </div>
+    </div></div>
+  </div>
+
+</div>
+
+<div class="foot">
+  <b>Shared rules across all four:</b> photos are never masked, tinted, or captioned over — labels
+  sit on the plaster beneath them like gallery cards · warm brown shadows lift each image off the
+  canvas · the verified mark becomes a small teal seal in the caption line · filter chips collapse
+  to one quiet small-caps line · copper appears only in italics and rules; teal only in the seal.
+  <br><br>
+  <b>The trade:</b> A shows ~1.5 cases per screen, B ~4, C exactly 1, D ~3. Instagram optimizes for
+  12 — that's the tone you're leaving behind on purpose.
+</div>
+
+</body>
+</html>

@@ -60,7 +60,7 @@ export type AuthUserResponse = {
   email: string;
   name: string;
   initials: string;
-  practice_id: string;
+  practice_id: string | null;
   role?: string | null;
   created_at: string;
 };
@@ -920,13 +920,14 @@ export async function register(payload: {
   email: string;
   password: string;
   name: string;
-  practice_name: string;
-  practice_location: string;
+  role?: 'provider' | 'member';
+  practice_name?: string;
+  practice_location?: string;
   practice_website?: string;
 }) {
   return request<{
     user: AuthUserResponse;
-    practice: PracticeResponse;
+    practice: PracticeResponse | null;
     access_token: string;
     refresh_token: string;
     token_type: string;
@@ -935,6 +936,30 @@ export async function register(payload: {
     auth: false,
     body: payload,
   });
+}
+
+export type PublicSessionCard = {
+  id: string;
+  treatment: string;
+  category: string;
+  before_image_url?: string | null;
+  after_image_url?: string | null;
+  published_at?: string | null;
+  practice: {
+    id: string;
+    name: string;
+    location: string;
+    widget_slug?: string | null;
+    website?: string | null;
+  };
+};
+
+/** Cross-clinic feed of published, consented cases (public — no auth). */
+export async function fetchPublicGallery(limit = 48) {
+  return request<{ sessions: PublicSessionCard[]; total: number }>(
+    `/api/gallery/sessions?limit=${limit}`,
+    { auth: false }
+  );
 }
 
 export async function login(payload: { email: string; password: string }) {
