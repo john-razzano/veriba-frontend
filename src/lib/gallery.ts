@@ -25,6 +25,9 @@ export function loadFeedCases(force = false): Promise<FeedCase[]> {
   inflight = fetchPublicGallery(48)
     .then((res) => {
       cases = res.sessions
+        // concept demo spas ("* Demo") carry generated placeholder art —
+        // keep the consumer feed to real photography
+        .filter((s) => !s.practice.name.endsWith(' Demo'))
         .filter((s) => s.before_image_url && s.after_image_url)
         .map((s) => ({
           id: s.id,
