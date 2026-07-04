@@ -954,6 +954,34 @@ export type PublicSessionCard = {
   };
 };
 
+export type PublicCustodyCheckpoint = {
+  step: string;
+  label: string;
+  detail?: string | null;
+  timestamp?: string | null;
+  hash?: string | null;
+  verified?: boolean;
+};
+
+export type PublicCaseStudy = PublicSessionCard & {
+  treatment_details?: string | null;
+  page_views?: number;
+  published_at?: string | null;
+  provider?: { name?: string | null; initials?: string | null };
+  chain_of_custody?: {
+    all_verified?: boolean;
+    checkpoint_count?: number;
+    checkpoints?: PublicCustodyCheckpoint[];
+  };
+};
+
+/** Full public case study for the detail screen (public — no auth). */
+export async function fetchPublicCaseStudy(sessionId: string) {
+  return request<{ session: PublicCaseStudy }>(`/api/gallery/sessions/${sessionId}`, {
+    auth: false,
+  });
+}
+
 /** Cross-clinic feed of published, consented cases (public — no auth). */
 export async function fetchPublicGallery(limit = 48, query?: string) {
   const params = new URLSearchParams({ limit: String(limit) });

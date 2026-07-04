@@ -8,7 +8,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BeforeAfterSlider } from '@/src/components/before-after-slider';
 import { getCachedCase, loadFeedCases } from '@/src/lib/gallery';
 import { ensureMemberState, isFollowed, isSaved, toggleFollow, toggleSave } from '@/src/lib/me';
+import { fetchPublicCaseStudy, type PublicCaseStudy } from '@/src/lib/veriba-api';
 import { colors, fonts, radii, spacing } from '@/src/theme';
+import { formatCompactDate } from '@/src/utils/format';
 
 const CUSTODY = [
   { icon: 'camera-outline', label: 'CAPTURED' },
@@ -24,8 +26,17 @@ export default function CaseDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [data, setData] = useState(id ? getCachedCase(id) : undefined);
+  const [study, setStudy] = useState<PublicCaseStudy | null>(null);
   const [saved, setSaved] = useState(id ? isSaved(id) : false);
   const [following, setFollowing] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      fetchPublicCaseStudy(id)
+        .then((res) => setStudy(res.session))
+        .catch(() => {});
+    }
+  }, [id]);
 
   useEffect(() => {
     if (!data && id) {
@@ -101,7 +112,11 @@ export default function CaseDetailScreen() {
         </View>
 
         <Text style={styles.title}>{data.treatment}</Text>
-        <Text style={styles.subtitle}>Result at 6 weeks · consent: full</Text>
+        <Text style={styles.subtitle}>
+          {study?.published_at
+            ? `Published ${formatCompactDate(study.published_at)}${study.category ? ` · ${study.category}` : ''}`
+            : (data.category ?? 'Verified result')}
+        </Text>
 
         <View style={styles.custody}>
           {CUSTODY.map((c) => (
@@ -112,10 +127,24 @@ export default function CaseDetailScreen() {
           ))}
         </View>
 
+        {study?.treatment_details ? (
+          <Text style={styles.details}>{study.treatment_details}</Text>
+        ) : null}
+
         <View style={styles.infoCard}>
-          <Row k="Treatment date" v="Apr 14, 2026" />
-          <Row k="Images verified" v="2 · hash-locked" />
-          <Row k="Provider" v="Dr. L. Okafor" last />
+          <Row
+            k="Published"
+            v={study?.published_at ? formatCompactDate(study.published_at) : '—'}
+          />
+          <Row
+            k="Images verified"
+            v={
+              study?.chain_of_custody?.checkpoints
+                ? `${study.chain_of_custody.checkpoints.length} checkpoints · hash-locked`
+                : '2 · hash-locked'
+            }
+          />
+          <Row k="Provider" v={study?.provider?.name ?? data.clinic} last />
         </View>
 
         <View style={styles.ctaRow}>
@@ -216,6 +245,14 @@ const styles = StyleSheet.create({
     color: colors.textMid,
     paddingHorizontal: spacing.md,
     paddingBottom: 12,
+  },
+  details: {
+    fontFamily: fonts.body.regular,
+    fontSize: 12.5,
+    lineHeight: 19,
+    color: colors.textMid,
+    paddingHorizontal: spacing.md,
+    paddingBottom: 13,
   },
   custody: { flexDirection: 'row', gap: 6, paddingHorizontal: spacing.md, paddingBottom: 13 },
   cstep: {

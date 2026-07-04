@@ -1,8 +1,9 @@
 import { useRouter, type Href } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,7 +16,7 @@ import { type FeedCase } from '@/src/data/mock-feed';
 import { loadFeedCases } from '@/src/lib/gallery';
 import { colors, fonts, spacing, typography } from '@/src/theme';
 
-const FILTERS = ['For you', 'Lip filler', 'Botox', 'Laser', 'Microneedling', 'PRP'];
+const ALL = 'For you';
 
 /**
  * Consumer discovery feed (mockup C1) — the member "Home" tab. Edge-to-edge
@@ -23,13 +24,14 @@ const FILTERS = ['For you', 'Lip filler', 'Botox', 'Laser', 'Microneedling', 'PR
  */
 export function DiscoverFeed() {
   const router = useRouter();
-  const [activeFilter, setActiveFilter] = useState('For you');
+  const [activeFilter, setActiveFilter] = useState(ALL);
   const [cases, setCases] = useState<FeedCase[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(() => {
+  const load = useCallback((force = false) => {
     setFailed(false);
-    loadFeedCases()
+    loadFeedCases(force)
       .then(setCases)
       .catch(() => setFailed(true));
   }, []);
@@ -38,12 +40,47 @@ export function DiscoverFeed() {
     load();
   }, [load]);
 
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      setCases(await loadFeedCases(true));
+      setFailed(false);
+    } catch {
+      setFailed(true);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  // chips reflect the categories actually present in the live feed
+  const filters = useMemo(() => {
+    const categories = [...new Set((cases ?? []).map((c) => c.category).filter(Boolean))];
+    return [ALL, ...(categories as string[])];
+  }, [cases]);
+
+  const shownCases = useMemo(
+    () =>
+      activeFilter === ALL
+        ? (cases ?? [])
+        : (cases ?? []).filter((c) => c.category === activeFilter),
+    [cases, activeFilter]
+  );
+
   const openCase = (c: FeedCase) => router.push(`/case/${c.id}` as Href);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header scrolls away with content (IG-style); the filter row stays pinned. */}
-      <ScrollView showsVerticalScrollIndicator={false} stickyHeaderIndices={[1]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        stickyHeaderIndices={[1]}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void onRefresh()}
+            tintColor={colors.copper}
+          />
+        }>
         <View style={styles.header}>
           <View style={styles.brand}>
             <Text style={styles.wordmark}>Veriba</Text>
@@ -56,7 +93,7 @@ export function DiscoverFeed() {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.filterContent}>
-            {FILTERS.map((f) => {
+            {filters.map((f) => {
               const on = f === activeFilter;
               return (
                 <Pressable
@@ -72,7 +109,7 @@ export function DiscoverFeed() {
         {failed ? (
           <View style={styles.stateWrap}>
             <Text style={styles.stateText}>Couldn't load the feed.</Text>
-            <Pressable onPress={load} style={styles.retry}>
+            <Pressable onPress={() => load()} style={styles.retry}>
               <Text style={styles.retryText}>Try again</Text>
             </Pressable>
           </View>
@@ -80,8 +117,12 @@ export function DiscoverFeed() {
           <View style={styles.stateWrap}>
             <ActivityIndicator color={colors.copper} />
           </View>
+        ) : shownCases.length === 0 ? (
+          <View style={styles.stateWrap}>
+            <Text style={styles.stateText}>No cases in this category yet.</Text>
+          </View>
         ) : (
-          <MosaicFeed cases={cases} onPressCase={openCase} />
+          <MosaicFeed cases={shownCases} onPressCase={openCase} />
         )}
         <View style={{ height: spacing.xl }} />
       </ScrollView>
