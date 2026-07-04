@@ -10,6 +10,7 @@ export function mapCardToFeedCase(s: PublicSessionCard): FeedCase | null {
     treatment: s.treatment,
     clinic: s.practice.name,
     practiceId: s.practice.id,
+    practiceSlug: s.practice.widget_slug ?? undefined,
     location: s.practice.location,
     category: s.category,
     beforeUri: s.before_image_url,
@@ -19,6 +20,7 @@ export function mapCardToFeedCase(s: PublicSessionCard): FeedCase | null {
 
 export interface GalleryClinic {
   practiceId?: string;
+  practiceSlug?: string;
   name: string;
   location: string;
   caseCount: number;
@@ -81,6 +83,7 @@ export function galleryClinics(list: FeedCase[]): GalleryClinic[] {
     } else {
       byName.set(c.clinic, {
         practiceId: c.practiceId,
+        practiceSlug: c.practiceSlug,
         name: c.clinic,
         location: c.location ?? '',
         caseCount: 1,

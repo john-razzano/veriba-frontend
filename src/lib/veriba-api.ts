@@ -982,6 +982,14 @@ export async function fetchPublicCaseStudy(sessionId: string) {
   });
 }
 
+/** Public clinic profile + its published cases (public — no auth). */
+export async function fetchPublicPractice(slug: string) {
+  return request<{ practice: PublicPracticeCard; sessions: PublicSessionCard[] }>(
+    `/api/gallery/practices/${slug}`,
+    { auth: false }
+  );
+}
+
 /** Cross-clinic feed of published, consented cases (public — no auth). */
 export async function fetchPublicGallery(limit = 48, query?: string) {
   const params = new URLSearchParams({ limit: String(limit) });

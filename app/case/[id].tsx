@@ -93,7 +93,12 @@ export default function CaseDetailScreen() {
         </View>
 
         <View style={styles.clinRow}>
-          <View style={styles.who}>
+          <Pressable
+            style={styles.who}
+            onPress={() => {
+              const slug = study?.practice?.widget_slug ?? data.practiceSlug;
+              if (slug) router.push(`/clinic/${slug}` as never);
+            }}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>{data.clinic.slice(0, 1)}</Text>
             </View>
@@ -101,7 +106,7 @@ export default function CaseDetailScreen() {
               <Text style={styles.clinName}>{data.clinic}</Text>
               <Text style={styles.clinSub}>{data.location ?? ''}</Text>
             </View>
-          </View>
+          </Pressable>
           <Pressable
             style={[styles.follow, following && styles.followActive]}
             onPress={onToggleFollow}>

@@ -167,8 +167,14 @@ function ClinicRow({ clinic }: { clinic: GalleryClinic }) {
     toggleFollow(practiceId).catch(() => setFollowing(isFollowed(practiceId)));
   };
 
+  const router = useRouter();
+
   return (
-    <View style={styles.clinicRow}>
+    <Pressable
+      style={styles.clinicRow}
+      onPress={() =>
+        clinic.practiceSlug ? router.push(`/clinic/${clinic.practiceSlug}` as Href) : undefined
+      }>
       <AvatarBadge initials={clinic.initials} size={42} />
       <View style={styles.clinicMeta}>
         <Text style={styles.clinicName}>{clinic.name}</Text>
@@ -183,7 +189,7 @@ function ClinicRow({ clinic }: { clinic: GalleryClinic }) {
           {following ? 'Following' : 'Follow'}
         </Text>
       </Pressable>
-    </View>
+    </Pressable>
   );
 }
 

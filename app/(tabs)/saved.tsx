@@ -87,7 +87,14 @@ export default function SavedScreen() {
           </Text>
         ) : (
           clinics.map((clinic) => (
-            <View key={clinic.id} style={styles.clinicRow}>
+            <Pressable
+              key={clinic.id}
+              style={styles.clinicRow}
+              onPress={() =>
+                clinic.widget_slug
+                  ? router.push(`/clinic/${clinic.widget_slug}` as Href)
+                  : undefined
+              }>
               <AvatarBadge
                 initials={clinic.provider_initials ?? clinic.name.slice(0, 2).toUpperCase()}
                 size={42}
@@ -101,7 +108,7 @@ export default function SavedScreen() {
               <Pressable style={styles.savedBtn} onPress={() => onUnfollow(clinic.id)}>
                 <Text style={styles.savedText}>Following</Text>
               </Pressable>
-            </View>
+            </Pressable>
           ))
         )}
         <View style={{ height: spacing.xl }} />

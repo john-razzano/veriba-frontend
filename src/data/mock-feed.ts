@@ -9,6 +9,7 @@ export interface FeedCase {
   beforeUri: string;
   afterUri: string;
   practiceId?: string;
+  practiceSlug?: string;
   location?: string;
   category?: string;
 }
