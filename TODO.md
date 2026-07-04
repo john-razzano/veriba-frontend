@@ -8,12 +8,15 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
 
 ## Now — correctness & security
 
-- [ ] **Verify consent-tier rendering end-to-end.** A `full_blur` approval sets
-  `obscure_mode` on the session, but confirm the *published web image* is actually
-  re-processed (eyes blurred) — approving with blur must never publish an unblurred
-  photo. Same question for `partial` (before must not be exposed by the gallery API).
-  There's a completed `full_blur` test session in Atelier's ready-to-publish queue to
-  test with. Touches backend `apply_consent`/image pipeline + app slider/tile rendering.
+- [ ] **Fix consent-tier privacy bugs (CONFIRMED, backend).** Audited July 4:
+  (a) `apply_consent` sets `obscure_mode` but nothing ever re-processes image pixels —
+  no blur function exists in `services/images.py`, so a `full_blur` approval would
+  publish the unblurred photo; (b) `serialize_public_session` returns
+  `before_image_url` unconditionally — the seeded partial-consent session
+  (Aster demo, "Jawline Definition Edit") exposes its before image in the public API
+  today. Fix: null `before_image_url` when `consent_tier == partial`; restrict
+  auto-publish/publish of `full_blur` sessions until obscuration is actually applied
+  to pixels (provider-side tooling), + tests. Later: private bucket + signed URLs.
 - [ ] **Check the production JWT secret.** Test runs warn the HMAC key is 9 bytes —
   that's the `change-me` default. Backend agent: confirm `.env` on the server sets a
   32+ byte `SECRET_KEY`; rotate if not.
@@ -25,13 +28,15 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
 
 ## Next — finish the consumer surface
 
-- [ ] **Case detail: real metadata.** Wire `app/case/[id].tsx` to
-  `GET /api/gallery/sessions/{id}` (already returns `treatment_details`, published
-  date, provider name, custody checkpoints) and drop the hardcoded
-  "Apr 14, 2026 / Dr. L. Okafor / 2 · hash-locked" card.
-- [ ] **Explore filter chips.** "Lip filler / Botox / …" are visual-only; wire them to
-  the gallery `category`/`query` params and derive the chip set from
-  `available_categories`. Add pull-to-refresh + pagination (feed caps at 48).
+- [x] **Case detail: real metadata.** Done July 4 (`194703d`) — detail fetches the
+  case study: published date, treatment details, checkpoint count, provider name.
+- [x] **Explore filter chips + pull-to-refresh.** Done July 4 (`194703d`) — chips
+  derive from live categories, client-side filter, pull-to-refresh. Pagination beyond
+  48 still open.
+- [ ] **Session restore after JS reload.** Metro reloads (and sometimes cold starts)
+  land on the login screen even though tokens are in SecureStore — restoreSession
+  isn't kicking in reliably. Annoying during dev, would log out real users on OTA
+  updates.
 - [ ] **Inbox "Earlier" activity.** Last mock text in the app. Needs a backend events
   feed (your result was viewed N times, clinic published your case, credit expiring)
   + `GET /api/me/activity`.
