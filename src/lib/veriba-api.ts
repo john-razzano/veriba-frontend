@@ -85,6 +85,9 @@ export type PracticeResponse = {
   credit_expiration_days?: number | null;
   auto_publish?: boolean | null;
   owner_id?: string | null;
+  bio?: string | null;
+  avatar_url?: string | null;
+  booking_url?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -699,6 +702,9 @@ export function mapPractice(practice: PracticeResponse, existing?: Practice | nu
     creditExpirationDays: practice.credit_expiration_days ?? 180,
     autoPublish: practice.auto_publish ?? false,
     ownerId: practice.owner_id ?? '',
+    bio: practice.bio ?? '',
+    avatarUrl: practice.avatar_url ?? null,
+    bookingUrl: practice.booking_url ?? '',
     createdAt: practice.created_at,
     updatedAt: practice.updated_at,
   };
@@ -951,6 +957,8 @@ export type PublicSessionCard = {
     location: string;
     widget_slug?: string | null;
     website?: string | null;
+    booking_url?: string | null;
+    avatar_url?: string | null;
   };
 };
 
@@ -1012,7 +1020,40 @@ export type PublicPracticeCard = {
   provider_initials?: string | null;
   published_session_count?: number;
   followed_at?: string;
+  bio?: string | null;
+  avatar_url?: string | null;
+  booking_url?: string | null;
 };
+
+// --- Provider: manage the public practice page (PRACTICE-PROFILE-SPEC) ---
+
+export type PracticeProfileUpdate = {
+  name?: string;
+  location?: string;
+  website?: string | null;
+  bio?: string | null;
+  booking_url?: string | null;
+};
+
+export async function updateMyPractice(payload: PracticeProfileUpdate) {
+  return request<PracticeResponse>('/api/practices/me', {
+    method: 'PATCH',
+    body: payload,
+  });
+}
+
+export async function uploadPracticeAvatar(photo: { uri: string; mimeType?: string | null }) {
+  const formData = new FormData();
+  formData.append('file', {
+    uri: photo.uri,
+    name: 'avatar.jpg',
+    type: photo.mimeType ?? 'image/jpeg',
+  } as never);
+  return request<{ avatar_url: string }>('/api/practices/me/avatar', {
+    method: 'POST',
+    body: formData,
+  });
+}
 
 export type ApprovalItem = {
   id: string;

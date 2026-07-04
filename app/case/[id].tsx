@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeforeAfterSlider } from '@/src/components/before-after-slider';
@@ -163,7 +163,17 @@ export default function CaseDetailScreen() {
               {saved ? 'Saved' : 'Save'}
             </Text>
           </Pressable>
-          <Pressable style={styles.btnPrimaryWrap}>
+          <Pressable
+            style={styles.btnPrimaryWrap}
+            onPress={() => {
+              const bookingUrl = study?.practice?.booking_url;
+              if (bookingUrl) {
+                void Linking.openURL(bookingUrl);
+              } else {
+                const slug = study?.practice?.widget_slug ?? data.practiceSlug;
+                if (slug) router.push(`/clinic/${slug}` as never);
+              }
+            }}>
             <LinearGradient
               colors={[colors.copper, colors.brown, colors.teal]}
               start={{ x: 0, y: 0 }}

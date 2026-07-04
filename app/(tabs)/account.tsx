@@ -174,6 +174,20 @@ function ProviderAccount() {
       </SectionCard>
 
       <SectionCard>
+        <Pressable
+          onPress={() => router.push('/practice-profile' as Href)}
+          style={styles.editPageRow}>
+          <View style={styles.sectionHeaderCopy}>
+            <Text style={styles.sectionTitle}>Public page</Text>
+            <Text style={styles.helper}>
+              Edit your clinic's bio, photo, and booking link — as members see it.
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textLight} />
+        </Pressable>
+      </SectionCard>
+
+      <SectionCard>
         <Text style={styles.sectionTitle}>Practice Settings</Text>
         {[
           ['Practice Name', practice?.name ?? 'Loading…'],
@@ -376,6 +390,11 @@ const styles = StyleSheet.create({
   },
   sectionHeaderCopy: {
     flex: 1,
+  },
+  editPageRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   actionText: {
     fontFamily: fonts.body.semibold,

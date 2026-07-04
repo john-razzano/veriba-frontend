@@ -79,6 +79,7 @@ function RootLayoutNav() {
         />
         <Stack.Screen name="my-results" options={{ headerShown: false }} />
         <Stack.Screen name="clinic/[slug]" options={{ headerShown: false }} />
+        <Stack.Screen name="practice-profile" options={{ headerShown: false }} />
         <Stack.Screen name="wizard" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ headerShown: false }} />
       </Stack>

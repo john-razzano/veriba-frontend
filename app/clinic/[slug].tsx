@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -71,10 +72,18 @@ export default function ClinicScreen() {
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.profile}>
-            <AvatarBadge
-              initials={practice.provider_initials ?? practice.name.slice(0, 2).toUpperCase()}
-              size={72}
-            />
+            {practice.avatar_url ? (
+              <Image
+                source={{ uri: practice.avatar_url }}
+                style={styles.avatarImg}
+                transition={150}
+              />
+            ) : (
+              <AvatarBadge
+                initials={practice.provider_initials ?? practice.name.slice(0, 2).toUpperCase()}
+                size={72}
+              />
+            )}
             <Text style={styles.name}>{practice.name}</Text>
             <Text style={styles.sub}>
               {practice.location}
@@ -86,6 +95,8 @@ export default function ClinicScreen() {
               {(practice.published_session_count ?? cases.length).toString()} VERIFIED RESULTS
             </Text>
 
+            {practice.bio ? <Text style={styles.bio}>{practice.bio}</Text> : null}
+
             <View style={styles.actions}>
               <Pressable
                 style={[styles.followBtn, following && styles.followBtnActive]}
@@ -94,6 +105,13 @@ export default function ClinicScreen() {
                   {following ? 'Following' : 'Follow'}
                 </Text>
               </Pressable>
+              {practice.booking_url ? (
+                <Pressable
+                  style={styles.followBtn}
+                  onPress={() => void Linking.openURL(practice.booking_url as string)}>
+                  <Text style={styles.followText}>Book consult</Text>
+                </Pressable>
+              ) : null}
               {website ? (
                 <Pressable
                   style={styles.siteBtn}
@@ -151,6 +169,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   sub: { ...typography.bodySm, color: colors.textMid, marginTop: 3 },
+  avatarImg: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.bgInput },
+  bio: {
+    ...typography.bodySm,
+    color: colors.textMid,
+    textAlign: 'center',
+    lineHeight: 19,
+    marginTop: 10,
+  },
   count: {
     fontFamily: fonts.body.semibold,
     fontSize: 9,

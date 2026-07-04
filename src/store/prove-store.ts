@@ -96,6 +96,7 @@ interface ProveStore {
   restoreSession: () => Promise<void>;
   bootstrap: () => Promise<void>;
   refreshSessions: () => Promise<void>;
+  refreshPractice: () => Promise<void>;
   refreshPracticeStats: () => Promise<void>;
   loadSession: (sessionId: string) => Promise<Session | null>;
   startWizard: () => void;
@@ -643,6 +644,11 @@ export const useProveStore = create<ProveStore>((set, get) => ({
     set({
       sessions: upsertSessionList(get().sessions, sessions),
     });
+  },
+
+  refreshPractice: async () => {
+    const practiceResponse = await getCurrentPractice();
+    set({ practice: mapPractice(practiceResponse, get().practice) });
   },
 
   refreshPracticeStats: async () => {

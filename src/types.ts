@@ -72,6 +72,9 @@ export interface Practice {
   creditExpirationDays: number;
   autoPublish: boolean;
   ownerId: string;
+  bio: string;
+  avatarUrl: string | null;
+  bookingUrl: string;
   createdAt: string;
   updatedAt: string;
 }
