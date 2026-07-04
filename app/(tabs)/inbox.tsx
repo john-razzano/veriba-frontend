@@ -6,16 +6,9 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeforeAfterSlider } from '@/src/components/before-after-slider';
-import { MOCK_INBOX_ACTIVITY, type InboxActivity } from '@/src/data/mock-feed';
 import { loadApprovals } from '@/src/lib/me';
 import type { ApprovalItem } from '@/src/lib/veriba-api';
 import { colors, fonts, spacing, typography } from '@/src/theme';
-
-const ACTIVITY_ICONS: Record<InboxActivity['icon'], { name: string; bg: string; tint: string }> = {
-  eye: { name: 'eye-outline', bg: colors.warningBg, tint: colors.copper },
-  heart: { name: 'heart-outline', bg: '#FBECEC', tint: colors.error },
-  chat: { name: 'chatbubble-outline', bg: colors.successBg, tint: colors.success },
-};
 
 /**
  * Consumer inbox (mockup C3): provider posts awaiting the patient's approval,
@@ -83,21 +76,8 @@ export default function InboxScreen() {
           </Text>
         )}
 
-        <Text style={styles.groupLabel}>EARLIER</Text>
-        {MOCK_INBOX_ACTIVITY.map((item) => {
-          const icon = ACTIVITY_ICONS[item.icon];
-          return (
-            <View key={item.id} style={styles.actItem}>
-              <View style={[styles.actIcon, { backgroundColor: icon.bg }]}>
-                <Ionicons name={icon.name as never} size={17} color={icon.tint} />
-              </View>
-              <View style={styles.actText}>
-                <Text style={styles.actLine}>{item.text}</Text>
-                <Text style={styles.actTime}>{item.timeAgo}</Text>
-              </View>
-            </View>
-          );
-        })}
+        {/* "Earlier" activity feed removed until a real /api/me/activity exists
+            (see TODO.md) — no fake data in the inbox. */}
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </SafeAreaView>
