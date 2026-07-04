@@ -1057,6 +1057,16 @@ export async function listApprovals() {
   return request<{ approvals: ApprovalItem[] }>('/api/me/approvals');
 }
 
+export type MyResultCard = PublicSessionCard & {
+  status: string;
+  consent_tier?: string | null;
+};
+
+/** The member's own sessions (matched by followup email), incl. unpublished. */
+export async function listMyResults() {
+  return request<{ sessions: MyResultCard[]; total: number }>('/api/me/results');
+}
+
 export async function respondToApproval(
   followupId: string,
   decision: ConsentDecision,

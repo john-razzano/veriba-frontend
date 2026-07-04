@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -12,6 +12,7 @@ import {
   SectionCard,
 } from '@/src/components/ui';
 import { loadFollowedClinics, loadSavedCases } from '@/src/lib/me';
+import { listMyResults } from '@/src/lib/veriba-api';
 import { useProveStore } from '@/src/store/prove-store';
 import { colors, fonts, radii, spacing, typography } from '@/src/theme';
 import { DEFAULT_SERVICES_OFFERED, TREATMENTS } from '@/src/types';
@@ -34,13 +35,17 @@ function MemberAccount() {
   const router = useRouter();
   const user = useProveStore((state) => state.user);
   const logout = useProveStore((state) => state.logout);
-  const [counts, setCounts] = useState({ saved: 0, following: 0 });
+  const [counts, setCounts] = useState({ results: 0, saved: 0, following: 0 });
 
   useFocusEffect(
     useCallback(() => {
-      void Promise.all([loadSavedCases(), loadFollowedClinics()])
-        .then(([saves, follows]) =>
-          setCounts({ saved: saves.length, following: follows.length })
+      void Promise.all([listMyResults(), loadSavedCases(), loadFollowedClinics()])
+        .then(([results, saves, follows]) =>
+          setCounts({
+            results: results.total,
+            saved: saves.length,
+            following: follows.length,
+          })
         )
         .catch(() => {});
     }, [])
@@ -60,7 +65,7 @@ function MemberAccount() {
         <View style={styles.memberStats}>
           {(
             [
-              ['0', 'My results'],
+              [String(counts.results), 'My results'],
               [String(counts.saved), 'Saved'],
               [String(counts.following), 'Following'],
             ] as [string, string][]
@@ -77,7 +82,13 @@ function MemberAccount() {
         {MEMBER_MENU.map(([icon, label], index) => (
           <Pressable
             key={label}
-            onPress={() => Alert.alert(label, 'Coming soon.')}
+            onPress={() =>
+              label === 'My before & afters'
+                ? router.push('/my-results' as Href)
+                : label === 'Saved clinics'
+                  ? router.push('/(tabs)/saved' as Href)
+                  : Alert.alert(label, 'Coming soon.')
+            }
             style={[styles.menuRow, index < MEMBER_MENU.length - 1 && styles.menuRowBorder]}>
             <Ionicons name={icon} size={17} color={colors.textMid} />
             <Text style={styles.menuLabel}>{label}</Text>
