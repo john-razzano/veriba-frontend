@@ -8,7 +8,10 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
 
 ## Now — correctness & security
 
-- [ ] **Fix consent-tier privacy bugs (CONFIRMED, backend).** Audited July 4:
+- [x] **Fix consent-tier privacy bugs.** FIXED July 4 (backend `18cc5f3`): partial
+  consent no longer exposes `before_image_url`; `full_blur` sessions are gated from
+  every publish path until pixels are actually obscured (blur tooling still a
+  follow-up under Later). Original finding: Audited July 4:
   (a) `apply_consent` sets `obscure_mode` but nothing ever re-processes image pixels —
   no blur function exists in `services/images.py`, so a `full_blur` approval would
   publish the unblurred photo; (b) `serialize_public_session` returns
@@ -17,7 +20,8 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
   today. Fix: null `before_image_url` when `consent_tier == partial`; restrict
   auto-publish/publish of `full_blur` sessions until obscuration is actually applied
   to pixels (provider-side tooling), + tests. Later: private bucket + signed URLs.
-- [ ] **Check the production JWT secret.** Test runs warn the HMAC key is 9 bytes —
+- [x] **Check the production JWT secret.** DONE July 4 — was the 9-byte default;
+  rotated to 64-char random hex (all sessions invalidated once). Original: Test runs warn the HMAC key is 9 bytes —
   that's the `change-me` default. Backend agent: confirm `.env` on the server sets a
   32+ byte `SECRET_KEY`; rotate if not.
 - [ ] **Stable API hostname.** The quick trycloudflare URL rotates whenever the tunnel
@@ -40,7 +44,8 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
 - [ ] **Inbox "Earlier" activity.** Last mock text in the app. Needs a backend events
   feed (your result was viewed N times, clinic published your case, credit expiring)
   + `GET /api/me/activity`.
-- [ ] **"My results" for members.** Account stat is hardcoded 0 and the "My before &
+- [x] **"My results" for members.** DONE July 4 — backend `GET /api/me/results`
+  (`18cc5f3`) + app screen/stat (`889e81d`). Original: Account stat is hardcoded 0 and the "My before &
   afters" menu is a stub. Backend: list sessions where `patient_email` matches the
   member (reuse the approvals matching); frontend: grid + stat.
 - [ ] **Book consult.** Decide the MVP: open the practice website / prefilled contact
@@ -60,13 +65,13 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
   taps and when the compare slider crosses center.
 - [ ] **Image loading polish**: blurhash placeholders computed at upload time, returned
   by the gallery API, used by `expo-image`.
-- [ ] **Per-practice demo removal.** `reset_demo_data.sh` nukes all demo spas together;
+- [x] **Per-practice demo removal.** DONE July 4 — `reset_demo_data.sh --slug <slug>`. `reset_demo_data.sh` nukes all demo spas together;
   add a `--slug` filter so Veriba Atelier can outlive (or be removed independently of)
   the three concept spas.
 
 ## Housekeeping
 
-- [ ] Delete orphaned test user `member@veriba.app` (password unknown; superseded by
+- [x] Deleted orphaned test user `member@veriba.app` (password unknown; superseded by
   `member2@veriba.app`) — one-liner for the backend agent.
 - [ ] Two consented test sessions sit in Atelier's ready-to-publish queue (one full,
   one full_blur) — deliberately kept for testing the provider publish flow; publish or
