@@ -1,34 +1,37 @@
-import { useRouter, type Href } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CaseTile } from '@/src/components/case-tile';
 import { AvatarBadge } from '@/src/components/ui';
 import type { FeedCase } from '@/src/data/mock-feed';
-import { galleryClinics, loadFeedCases, type GalleryClinic } from '@/src/lib/gallery';
+import { loadFollowedClinics, loadSavedCases, toggleFollow } from '@/src/lib/me';
+import type { PublicPracticeCard } from '@/src/lib/veriba-api';
 import { colors, fonts, spacing, typography } from '@/src/theme';
 
 type SavedTab = 'cases' | 'clinics';
 
-/**
- * Consumer saved (mockup C7). Saves/follows don't exist server-side yet, so
- * this shows a sample of live gallery cases as stand-in bookmarks.
- */
+/** Consumer saved (mockup C7): the member's real bookmarks and followed clinics. */
 export default function SavedScreen() {
   const router = useRouter();
   const [tab, setTab] = useState<SavedTab>('cases');
   const [cases, setCases] = useState<FeedCase[]>([]);
-  const [clinics, setClinics] = useState<GalleryClinic[]>([]);
+  const [clinics, setClinics] = useState<PublicPracticeCard[]>([]);
 
-  useEffect(() => {
-    loadFeedCases()
-      .then((all) => {
-        setCases(all.slice(0, 6));
-        setClinics(galleryClinics(all));
-      })
-      .catch(() => {});
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadSavedCases().then(setCases).catch(() => {});
+      loadFollowedClinics().then(setClinics).catch(() => {});
+    }, [])
+  );
+
+  const onUnfollow = (practiceId: string) => {
+    setClinics((prev) => prev.filter((p) => p.id !== practiceId));
+    toggleFollow(practiceId).catch(() =>
+      loadFollowedClinics().then(setClinics).catch(() => {})
+    );
+  };
 
   const rows: FeedCase[][] = [];
   for (let i = 0; i < cases.length; i += 2) {
@@ -57,33 +60,46 @@ export default function SavedScreen() {
         </View>
 
         {tab === 'cases' ? (
-          <View style={styles.grid}>
-            {rows.map((row, i) => (
-              <View key={i} style={styles.gridRow}>
-                {row.map((c) => (
-                  <CaseTile
-                    key={c.id}
-                    afterUri={c.afterUri}
-                    treatment={c.treatment}
-                    clinic={c.clinic}
-                    onPress={() => router.push(`/case/${c.id}` as Href)}
-                  />
-                ))}
-              </View>
-            ))}
-          </View>
+          cases.length === 0 ? (
+            <Text style={styles.empty}>
+              Nothing saved yet — tap the bookmark on any case to keep it here.
+            </Text>
+          ) : (
+            <View style={styles.grid}>
+              {rows.map((row, i) => (
+                <View key={i} style={styles.gridRow}>
+                  {row.map((c) => (
+                    <CaseTile
+                      key={c.id}
+                      afterUri={c.afterUri}
+                      treatment={c.treatment}
+                      clinic={c.clinic}
+                      onPress={() => router.push(`/case/${c.id}` as Href)}
+                    />
+                  ))}
+                </View>
+              ))}
+            </View>
+          )
+        ) : clinics.length === 0 ? (
+          <Text style={styles.empty}>
+            No clinics yet — follow one from a case or from Search.
+          </Text>
         ) : (
           clinics.map((clinic) => (
-            <View key={clinic.name} style={styles.clinicRow}>
-              <AvatarBadge initials={clinic.initials} size={42} />
+            <View key={clinic.id} style={styles.clinicRow}>
+              <AvatarBadge
+                initials={clinic.provider_initials ?? clinic.name.slice(0, 2).toUpperCase()}
+                size={42}
+              />
               <View style={styles.clinicMeta}>
                 <Text style={styles.clinicName}>{clinic.name}</Text>
                 <Text style={styles.clinicSub}>
-                  {clinic.location} · {clinic.caseCount} verified results
+                  {clinic.location} · {clinic.published_session_count ?? 0} verified results
                 </Text>
               </View>
-              <Pressable style={styles.savedBtn}>
-                <Text style={styles.savedText}>Saved</Text>
+              <Pressable style={styles.savedBtn} onPress={() => onUnfollow(clinic.id)}>
+                <Text style={styles.savedText}>Following</Text>
               </Pressable>
             </View>
           ))
@@ -150,4 +166,12 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   savedText: { fontFamily: fonts.body.semibold, fontSize: 11, color: colors.copper },
+  empty: {
+    ...typography.bodySm,
+    color: colors.textMid,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingTop: 60,
+    lineHeight: 20,
+  },
 });

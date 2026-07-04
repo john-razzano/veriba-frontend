@@ -8,6 +8,7 @@ export interface FeedCase {
   clinic: string;
   beforeUri: string;
   afterUri: string;
+  practiceId?: string;
   location?: string;
   category?: string;
 }

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
@@ -11,6 +11,7 @@ import {
   ScreenScroll,
   SectionCard,
 } from '@/src/components/ui';
+import { loadFollowedClinics, loadSavedCases } from '@/src/lib/me';
 import { useProveStore } from '@/src/store/prove-store';
 import { colors, fonts, radii, spacing, typography } from '@/src/theme';
 import { DEFAULT_SERVICES_OFFERED, TREATMENTS } from '@/src/types';
@@ -28,11 +29,22 @@ const MEMBER_MENU = [
   ['settings-outline', 'Settings'],
 ] as const;
 
-/** Consumer account (mockup C5). Stats are placeholders until saves/follows exist. */
+/** Consumer account (mockup C5). */
 function MemberAccount() {
   const router = useRouter();
   const user = useProveStore((state) => state.user);
   const logout = useProveStore((state) => state.logout);
+  const [counts, setCounts] = useState({ saved: 0, following: 0 });
+
+  useFocusEffect(
+    useCallback(() => {
+      void Promise.all([loadSavedCases(), loadFollowedClinics()])
+        .then(([saves, follows]) =>
+          setCounts({ saved: saves.length, following: follows.length })
+        )
+        .catch(() => {});
+    }, [])
+  );
 
   return (
     <ScreenScroll contentContainerStyle={styles.content}>
@@ -49,9 +61,9 @@ function MemberAccount() {
           {(
             [
               ['0', 'My results'],
-              ['0', 'Saved'],
-              ['0', 'Following'],
-            ] as const
+              [String(counts.saved), 'Saved'],
+              [String(counts.following), 'Following'],
+            ] as [string, string][]
           ).map(([value, label]) => (
             <View key={label} style={styles.memberStat}>
               <Text style={styles.memberStatValue}>{value}</Text>

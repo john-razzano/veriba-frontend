@@ -73,6 +73,10 @@ function RootLayoutNav() {
         <Stack.Screen name="session/[id]" options={{ headerShown: false }} />
         {/* Swipe-back disabled: it fights the before/after drag slider. */}
         <Stack.Screen name="case/[id]" options={{ headerShown: false, gestureEnabled: false }} />
+        <Stack.Screen
+          name="approval/[id]"
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
         <Stack.Screen name="wizard" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ headerShown: false }} />
       </Stack>

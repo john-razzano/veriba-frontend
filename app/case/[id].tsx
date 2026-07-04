@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeforeAfterSlider } from '@/src/components/before-after-slider';
 import { getCachedCase, loadFeedCases } from '@/src/lib/gallery';
+import { ensureMemberState, isFollowed, isSaved, toggleFollow, toggleSave } from '@/src/lib/me';
 import { colors, fonts, radii, spacing } from '@/src/theme';
 
 const CUSTODY = [
@@ -23,6 +24,8 @@ export default function CaseDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [data, setData] = useState(id ? getCachedCase(id) : undefined);
+  const [saved, setSaved] = useState(id ? isSaved(id) : false);
+  const [following, setFollowing] = useState(false);
 
   useEffect(() => {
     if (!data && id) {
@@ -31,6 +34,28 @@ export default function CaseDetailScreen() {
         .catch(() => {});
     }
   }, [data, id]);
+
+  useEffect(() => {
+    void ensureMemberState()
+      .then(() => {
+        if (id) setSaved(isSaved(id));
+        if (data?.practiceId) setFollowing(isFollowed(data.practiceId));
+      })
+      .catch(() => {});
+  }, [id, data?.practiceId]);
+
+  const onToggleSave = () => {
+    if (!id) return;
+    setSaved((prev) => !prev);
+    toggleSave(id).catch(() => setSaved(isSaved(id)));
+  };
+
+  const onToggleFollow = () => {
+    if (!data?.practiceId) return;
+    const practiceId = data.practiceId;
+    setFollowing((prev) => !prev);
+    toggleFollow(practiceId).catch(() => setFollowing(isFollowed(practiceId)));
+  };
 
   if (!data) {
     return (
@@ -66,8 +91,12 @@ export default function CaseDetailScreen() {
               <Text style={styles.clinSub}>{data.location ?? ''}</Text>
             </View>
           </View>
-          <Pressable style={styles.follow}>
-            <Text style={styles.followText}>Follow</Text>
+          <Pressable
+            style={[styles.follow, following && styles.followActive]}
+            onPress={onToggleFollow}>
+            <Text style={[styles.followText, following && styles.followTextActive]}>
+              {following ? 'Following' : 'Follow'}
+            </Text>
           </Pressable>
         </View>
 
@@ -90,9 +119,15 @@ export default function CaseDetailScreen() {
         </View>
 
         <View style={styles.ctaRow}>
-          <Pressable style={[styles.btn, styles.btnGhost]}>
-            <Ionicons name="bookmark-outline" size={16} color={colors.text} />
-            <Text style={styles.btnGhostText}>Save</Text>
+          <Pressable style={[styles.btn, styles.btnGhost]} onPress={onToggleSave}>
+            <Ionicons
+              name={saved ? 'bookmark' : 'bookmark-outline'}
+              size={16}
+              color={saved ? colors.copper : colors.text}
+            />
+            <Text style={[styles.btnGhostText, saved && { color: colors.copper }]}>
+              {saved ? 'Saved' : 'Save'}
+            </Text>
           </Pressable>
           <Pressable style={styles.btnPrimaryWrap}>
             <LinearGradient
@@ -161,8 +196,14 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     paddingHorizontal: 14,
     paddingVertical: 7,
+    borderWidth: 1,
+    borderColor: colors.copper,
+  },
+  followActive: {
+    backgroundColor: 'transparent',
   },
   followText: { fontFamily: fonts.body.bold, fontSize: 11, color: colors.white },
+  followTextActive: { color: colors.copper },
   title: {
     fontFamily: fonts.display.medium,
     fontSize: 23,

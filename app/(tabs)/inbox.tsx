@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter, type Href } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter, type Href } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeforeAfterSlider } from '@/src/components/before-after-slider';
-import { MOCK_INBOX_ACTIVITY, type FeedCase, type InboxActivity } from '@/src/data/mock-feed';
-import { loadFeedCases } from '@/src/lib/gallery';
+import { MOCK_INBOX_ACTIVITY, type InboxActivity } from '@/src/data/mock-feed';
+import { loadApprovals } from '@/src/lib/me';
+import type { ApprovalItem } from '@/src/lib/veriba-api';
 import { colors, fonts, spacing, typography } from '@/src/theme';
 
 const ACTIVITY_ICONS: Record<InboxActivity['icon'], { name: string; bg: string; tint: string }> = {
@@ -22,15 +23,13 @@ const ACTIVITY_ICONS: Record<InboxActivity['icon'], { name: string; bg: string; 
  */
 export default function InboxScreen() {
   const router = useRouter();
-  // Stand-in approval request until the in-app approvals API exists (§7):
-  // uses the most recent live gallery case.
-  const [reviewCase, setReviewCase] = useState<FeedCase | null>(null);
+  const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
 
-  useEffect(() => {
-    loadFeedCases()
-      .then((all) => setReviewCase(all[0] ?? null))
-      .catch(() => {});
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadApprovals(true).then(setApprovals).catch(() => {});
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -40,38 +39,49 @@ export default function InboxScreen() {
           <Ionicons name="notifications-outline" size={20} color={colors.textMid} />
         </View>
 
-        {reviewCase ? (
+        {approvals.length > 0 ? (
           <>
             <Text style={styles.groupLabel}>NEEDS YOUR REVIEW</Text>
-            <LinearGradient
-              colors={[colors.teal, colors.tealLight]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.reviewCard}>
-              <BeforeAfterSlider
-                beforeUri={reviewCase.beforeUri}
-                afterUri={reviewCase.afterUri}
-                height={110}
-              />
-              <View style={styles.reviewBody}>
-                <Text style={styles.eyebrow}>APPROVAL REQUESTED</Text>
-                <Text style={styles.reviewTitle}>
-                  {reviewCase.clinic} wants to publish your before & after
-                </Text>
-                <Text style={styles.reviewText}>
-                  Your provider created a post from your {reviewCase.treatment.toLowerCase()}{' '}
-                  session. Review how it looks and set your privacy level before it goes live.
-                </Text>
-                <Pressable
-                  onPress={() => router.push(`/case/${reviewCase.id}` as Href)}
-                  style={styles.reviewGo}>
-                  <Text style={styles.reviewGoText}>Review & respond</Text>
-                  <Ionicons name="arrow-forward" size={13} color={colors.teal} />
-                </Pressable>
-              </View>
-            </LinearGradient>
+            {approvals.map((approval) => (
+              <LinearGradient
+                key={approval.id}
+                colors={[colors.teal, colors.tealLight]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.reviewCard}>
+                {approval.session.before_image_url && approval.session.after_image_url ? (
+                  <BeforeAfterSlider
+                    beforeUri={approval.session.before_image_url}
+                    afterUri={approval.session.after_image_url}
+                    height={110}
+                  />
+                ) : null}
+                <View style={styles.reviewBody}>
+                  <Text style={styles.eyebrow}>APPROVAL REQUESTED</Text>
+                  <Text style={styles.reviewTitle}>
+                    {approval.practice.name} wants to publish your before & after
+                  </Text>
+                  <Text style={styles.reviewText}>
+                    Your provider created a post from your{' '}
+                    {approval.session.treatment.toLowerCase()} session. Review how it looks and
+                    set your privacy level before it goes live.
+                  </Text>
+                  <Pressable
+                    onPress={() => router.push(`/approval/${approval.id}` as Href)}
+                    style={styles.reviewGo}>
+                    <Text style={styles.reviewGoText}>Review & respond</Text>
+                    <Ionicons name="arrow-forward" size={13} color={colors.teal} />
+                  </Pressable>
+                </View>
+              </LinearGradient>
+            ))}
           </>
-        ) : null}
+        ) : (
+          <Text style={styles.emptyReview}>
+            No approvals waiting — when a clinic asks to publish your before & after, it
+            lands here.
+          </Text>
+        )}
 
         <Text style={styles.groupLabel}>EARLIER</Text>
         {MOCK_INBOX_ACTIVITY.map((item) => {
@@ -175,4 +185,12 @@ const styles = StyleSheet.create({
   actText: { flex: 1 },
   actLine: { fontFamily: fonts.body.regular, fontSize: 12, lineHeight: 17, color: colors.text },
   actTime: { ...typography.bodyXs, color: colors.textLight, marginTop: 2 },
+  emptyReview: {
+    ...typography.bodySm,
+    color: colors.textMid,
+    paddingHorizontal: spacing.md,
+    paddingTop: 4,
+    paddingBottom: 20,
+    lineHeight: 20,
+  },
 });

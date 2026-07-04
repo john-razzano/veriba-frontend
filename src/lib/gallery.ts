@@ -1,9 +1,24 @@
 // Consumer discovery data: fetches the public gallery once and caches it in
 // memory for the session. Replaces the pravatar mock feed.
-import { fetchPublicGallery } from '@/src/lib/veriba-api';
+import { fetchPublicGallery, type PublicSessionCard } from '@/src/lib/veriba-api';
 import type { FeedCase } from '@/src/data/mock-feed';
 
+export function mapCardToFeedCase(s: PublicSessionCard): FeedCase | null {
+  if (!s.before_image_url || !s.after_image_url) return null;
+  return {
+    id: s.id,
+    treatment: s.treatment,
+    clinic: s.practice.name,
+    practiceId: s.practice.id,
+    location: s.practice.location,
+    category: s.category,
+    beforeUri: s.before_image_url,
+    afterUri: s.after_image_url,
+  };
+}
+
 export interface GalleryClinic {
+  practiceId?: string;
   name: string;
   location: string;
   caseCount: number;
@@ -28,16 +43,8 @@ export function loadFeedCases(force = false): Promise<FeedCase[]> {
         // concept demo spas ("* Demo") carry generated placeholder art —
         // keep the consumer feed to real photography
         .filter((s) => !s.practice.name.endsWith(' Demo'))
-        .filter((s) => s.before_image_url && s.after_image_url)
-        .map((s) => ({
-          id: s.id,
-          treatment: s.treatment,
-          clinic: s.practice.name,
-          location: s.practice.location,
-          category: s.category,
-          beforeUri: s.before_image_url as string,
-          afterUri: s.after_image_url as string,
-        }));
+        .map(mapCardToFeedCase)
+        .filter((c): c is FeedCase => c !== null);
       inflight = null;
       return cases;
     })
@@ -46,6 +53,15 @@ export function loadFeedCases(force = false): Promise<FeedCase[]> {
       throw error;
     });
   return inflight;
+}
+
+/** One-off text search against the public gallery (uncached). */
+export async function searchCases(query: string): Promise<FeedCase[]> {
+  const res = await fetchPublicGallery(30, query);
+  return res.sessions
+    .filter((s) => !s.practice.name.endsWith(' Demo'))
+    .map(mapCardToFeedCase)
+    .filter((c): c is FeedCase => c !== null);
 }
 
 export function getCachedCases(): FeedCase[] {
@@ -64,6 +80,7 @@ export function galleryClinics(list: FeedCase[]): GalleryClinic[] {
       existing.caseCount += 1;
     } else {
       byName.set(c.clinic, {
+        practiceId: c.practiceId,
         name: c.clinic,
         location: c.location ?? '',
         caseCount: 1,

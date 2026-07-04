@@ -955,11 +955,92 @@ export type PublicSessionCard = {
 };
 
 /** Cross-clinic feed of published, consented cases (public — no auth). */
-export async function fetchPublicGallery(limit = 48) {
+export async function fetchPublicGallery(limit = 48, query?: string) {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (query) params.set('query', query);
   return request<{ sessions: PublicSessionCard[]; total: number }>(
-    `/api/gallery/sessions?limit=${limit}`,
+    `/api/gallery/sessions?${params.toString()}`,
     { auth: false }
   );
+}
+
+// --- Member interactions (/api/me/*) ---
+
+export type PublicPracticeCard = {
+  id: string;
+  name: string;
+  location: string;
+  website?: string | null;
+  widget_slug?: string | null;
+  provider_name?: string | null;
+  provider_initials?: string | null;
+  published_session_count?: number;
+  followed_at?: string;
+};
+
+export type ApprovalItem = {
+  id: string;
+  requested_at: string;
+  practice: { id: string; name: string; location: string };
+  session: {
+    id: string;
+    treatment: string;
+    category: string;
+    before_image_url?: string | null;
+    after_image_url?: string | null;
+  };
+  discount_offer: { full: number; partial: number; full_blur: number };
+};
+
+export type ConsentDecision = 'full' | 'full_blur' | 'partial' | 'decline';
+
+export async function saveCase(sessionId: string) {
+  return request<{ session_id: string; saved_at: string }>(`/api/me/saves/${sessionId}`, {
+    method: 'POST',
+  });
+}
+
+export async function unsaveCase(sessionId: string) {
+  return request<{ removed: boolean }>(`/api/me/saves/${sessionId}`, { method: 'DELETE' });
+}
+
+export async function listSaves(limit = 60) {
+  return request<{ sessions: (PublicSessionCard & { saved_at: string })[]; total: number }>(
+    `/api/me/saves?limit=${limit}`
+  );
+}
+
+export async function followPractice(practiceId: string) {
+  return request<{ practice_id: string; followed_at: string }>(
+    `/api/me/follows/${practiceId}`,
+    { method: 'POST' }
+  );
+}
+
+export async function unfollowPractice(practiceId: string) {
+  return request<{ removed: boolean }>(`/api/me/follows/${practiceId}`, { method: 'DELETE' });
+}
+
+export async function listFollows() {
+  return request<{ practices: PublicPracticeCard[]; total: number }>('/api/me/follows');
+}
+
+export async function listApprovals() {
+  return request<{ approvals: ApprovalItem[] }>('/api/me/approvals');
+}
+
+export async function respondToApproval(
+  followupId: string,
+  decision: ConsentDecision,
+  signatureSvg?: string | null
+) {
+  return request<{
+    consent_tier: string;
+    reward_earned?: { amount?: number; code?: string; description?: string } | null;
+  }>(`/api/me/approvals/${followupId}/respond`, {
+    method: 'POST',
+    body: { decision, signature_svg: signatureSvg ?? undefined },
+  });
 }
 
 export async function login(payload: { email: string; password: string }) {

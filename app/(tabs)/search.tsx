@@ -12,13 +12,15 @@ import {
   galleryClinics,
   galleryTreatmentBuckets,
   loadFeedCases,
+  searchCases,
   type GalleryClinic,
   type TreatmentBucket,
 } from '@/src/lib/gallery';
+import { ensureMemberState, isFollowed, toggleFollow } from '@/src/lib/me';
 import { colors, fonts, spacing, typography } from '@/src/theme';
 
 /**
- * Consumer search (mockup C6): search bar, trending treatments,
+ * Consumer search (mockup C6): live search + trending treatments,
  * browse-by-treatment mosaic (live gallery data), top clinics.
  */
 export default function SearchScreen() {
@@ -26,6 +28,8 @@ export default function SearchScreen() {
   const [cases, setCases] = useState<FeedCase[]>([]);
   const [buckets, setBuckets] = useState<TreatmentBucket[]>([]);
   const [clinics, setClinics] = useState<GalleryClinic[]>([]);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<FeedCase[] | null>(null);
 
   useEffect(() => {
     loadFeedCases()
@@ -36,6 +40,21 @@ export default function SearchScreen() {
       })
       .catch(() => {});
   }, []);
+
+  // debounced live search against /api/gallery/sessions?query=
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      setResults(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      searchCases(trimmed)
+        .then(setResults)
+        .catch(() => setResults([]));
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   const openTreatment = (treatment: string) => {
     const match =
@@ -55,9 +74,40 @@ export default function SearchScreen() {
             placeholder="Treatments, clinics, locations"
             placeholderTextColor={colors.textLight}
             style={styles.searchInput}
+            value={query}
+            onChangeText={setQuery}
+            autoCapitalize="none"
+            autoCorrect={false}
+            clearButtonMode="while-editing"
           />
         </View>
 
+        {results !== null ? (
+          <>
+            <Text style={styles.groupLabel}>
+              {results.length === 0
+                ? 'NO RESULTS'
+                : `${results.length} RESULT${results.length === 1 ? '' : 'S'}`}
+            </Text>
+            <View style={styles.browseGrid}>
+              {Array.from({ length: Math.ceil(results.length / 3) }, (_, row) => (
+                <View key={row} style={styles.browseRow}>
+                  {results.slice(row * 3, row * 3 + 3).map((c) => (
+                    <CaseTile
+                      key={c.id}
+                      afterUri={c.afterUri}
+                      treatment={c.treatment}
+                      clinic={c.clinic}
+                      labelVariant="small"
+                      onPress={() => router.push(`/case/${c.id}` as Href)}
+                    />
+                  ))}
+                </View>
+              ))}
+            </View>
+          </>
+        ) : (
+          <>
         <Text style={styles.groupLabel}>TRENDING</Text>
         <View style={styles.trend}>
           {TRENDING_TREATMENTS.map((t) => (
@@ -87,22 +137,53 @@ export default function SearchScreen() {
 
         <Text style={styles.groupLabel}>TOP CLINICS NEAR YOU</Text>
         {clinics.map((clinic) => (
-          <View key={clinic.name} style={styles.clinicRow}>
-            <AvatarBadge initials={clinic.initials} size={42} />
-            <View style={styles.clinicMeta}>
-              <Text style={styles.clinicName}>{clinic.name}</Text>
-              <Text style={styles.clinicSub}>
-                {clinic.location} · {clinic.caseCount} verified results
-              </Text>
-            </View>
-            <Pressable style={styles.followBtn}>
-              <Text style={styles.followText}>Follow</Text>
-            </Pressable>
-          </View>
+          <ClinicRow key={clinic.name} clinic={clinic} />
         ))}
+          </>
+        )}
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+function ClinicRow({ clinic }: { clinic: GalleryClinic }) {
+  const [following, setFollowing] = useState(
+    clinic.practiceId ? isFollowed(clinic.practiceId) : false
+  );
+
+  useEffect(() => {
+    void ensureMemberState()
+      .then(() => {
+        if (clinic.practiceId) setFollowing(isFollowed(clinic.practiceId));
+      })
+      .catch(() => {});
+  }, [clinic.practiceId]);
+
+  const onToggle = () => {
+    if (!clinic.practiceId) return;
+    const practiceId = clinic.practiceId;
+    setFollowing((prev) => !prev);
+    toggleFollow(practiceId).catch(() => setFollowing(isFollowed(practiceId)));
+  };
+
+  return (
+    <View style={styles.clinicRow}>
+      <AvatarBadge initials={clinic.initials} size={42} />
+      <View style={styles.clinicMeta}>
+        <Text style={styles.clinicName}>{clinic.name}</Text>
+        <Text style={styles.clinicSub}>
+          {clinic.location} · {clinic.caseCount} verified results
+        </Text>
+      </View>
+      <Pressable
+        style={[styles.followBtn, following && styles.followBtnActive]}
+        onPress={onToggle}>
+        <Text style={[styles.followText, following && styles.followTextActive]}>
+          {following ? 'Following' : 'Follow'}
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -184,5 +265,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 11,
     paddingVertical: 5,
   },
+  followBtnActive: { backgroundColor: colors.copper },
   followText: { fontFamily: fonts.body.semibold, fontSize: 11, color: colors.copper },
+  followTextActive: { color: colors.white },
 });

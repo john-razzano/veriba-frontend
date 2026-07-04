@@ -52,6 +52,7 @@ import {
   type User,
   type WizardState,
 } from '@/src/types';
+import { resetMemberState } from '@/src/lib/me';
 import { safeInitials } from '@/src/utils/format';
 import { createPhotoObscuration, getDefaultObscureRegion, syncPhotoObscuration } from '@/src/utils/obscure';
 
@@ -539,6 +540,7 @@ export const useProveStore = create<ProveStore>((set, get) => ({
       // Ignore logout failures and clear local session anyway.
     } finally {
       await clearTokens();
+      resetMemberState();
       set(createLoggedOutState(currentPractice));
     }
   },
