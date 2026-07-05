@@ -1,6 +1,6 @@
 # Veriba — working TODO
 
-State as of July 4, 2026 (evening): full two-sided loop is live against the real
+State as of July 5, 2026: full two-sided loop is live against the real
 backend — members browse/save/follow/search/approve-with-signature/earn credits/book;
 providers document, request consent, publish, and manage their public page.
 Frontend `e2e4aed` · backend `a7b6072` · DB at migration `0004`.
@@ -25,9 +25,9 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
 - [x] **Session restore after JS reload.** FIXED July 5 (`c5df5f3`) — restore moved to
   the root layout (reloads could mount a restored route without ever rendering
   app/index); bootstrap backgrounds; login redirects when already authed.
-- [ ] **Inbox "Earlier" activity.** Frontend wired July 5 (`c5df5f3`, hidden until the
-  endpoint exists); backend `GET /api/me/activity` spec'd in CONSUMER-API-SPEC §6
-  (derived from followups/credits — no new tables). Waiting on the backend agent.
+- [x] **Inbox "Earlier" activity.** DONE July 5 — backend `GET /api/me/activity`
+  (derived, no new tables, 42/42 tests) + app wiring (`c5df5f3`). Verified live:
+  real credit/approval events render in the Inbox.
 - [x] **Feed pagination.** DONE July 5 (`c5df5f3`) — infinite scroll pages the gallery
   by raw offset with dedupe; needs >48 published cases to observe.
 
