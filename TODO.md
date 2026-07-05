@@ -48,10 +48,22 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
   (`18cc5f3`) + app screen/stat (`889e81d`). Original: Account stat is hardcoded 0 and the "My before &
   afters" menu is a stub. Backend: list sessions where `patient_email` matches the
   member (reuse the approvals matching); frontend: grid + stat.
-- [ ] **Book consult.** Decide the MVP: open the practice website / prefilled contact
-  request stored per practice? Currently an inert button on the case detail.
+- [x] **Book consult.** DONE July 4 — providers set a `booking_url` on their public
+  page (PRACTICE-PROFILE-SPEC); Book consult opens it from the case detail and the
+  clinic page, falling back to the clinic page when unset. Native consult-request
+  messaging remains a Later item.
+
+- [x] **Provider-managed public page (Phase 1).** DONE July 4 — backend `a7b6072`
+  (migration 0004: bio/avatar/booking_url, PATCH + avatar endpoints), frontend
+  `f286aad` (editor in provider Account, consumer surfaces). Verified end-to-end.
+  Phase 2 (featured case, hide/reorder, persisted services) below.
 
 ## Later — provider side & polish
+
+- [ ] **Public page Phase 2**: pin a featured case (`featured_session_id` — serializer
+  already half-supports it), hide/reorder cases on the public grid, persist
+  services server-side (today "Services Offered" toggles are client-only) and render
+  a services menu on the clinic page linking to filtered grids.
 
 - [ ] **Provider reskin (spec P1/P2/P4).** Dashboard mosaic with status pills, the
   Activity screen grouped by approval state, provider account restyle. The provider
