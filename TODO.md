@@ -33,16 +33,18 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
 
 ## Later — provider side & polish
 
-- [ ] **Public page Phase 2**: pin a featured case (`featured_session_id` — the
-  serializer half-supports it), hide/reorder cases on the public grid, persist
-  services server-side (the Account "Services Offered" toggles are client-only
-  today) and render a services menu on the clinic page linking to filtered grids.
+- [ ] **Public page Phase 2 + blurhash**: spec'd July 5 (PRACTICE-PROFILE-SPEC
+  Phase 2, backend `fc67128`) — featured-case pin, persisted services, blurhash
+  placeholders + backfill. Awaiting backend agent; app wiring follows.
+  (Hide/reorder deliberately descoped — unpublish covers removal.)
 - [ ] **Phase 3 — growth layer**: native consult-request messaging (Book consult
   currently opens the clinic's `booking_url`), hours/map (lat/lng columns exist),
   provider analytics surfaced in-app (`page_views` is already tracked per case).
-- [ ] **Provider reskin (spec P1/P2/P4).** Dashboard mosaic with status pills,
-  Activity screen grouped by approval state, provider account restyle — provider
-  side still runs the pre-redesign UI.
+- [x] **Provider reskin (P1/P2/P4).** DONE July 5 (`c458545`) — dashboard mosaic with
+  status pills, Activity screen grouped by approval state (surfaces "needs
+  obscuration" on blur-gated cases), Messages placeholder tab, account header
+  restyle, 5-item provider tab bar. Bonus fix: rotated auth tokens now persist to
+  SecureStore (was silently logging users out after ~30 min + reload).
 - [ ] **Multi-photo cases.** The triptych `*_mid.jpg` extras sit unseeded in backend
   `seed_assets/`; add `photos[]` to the case-study payload + a thumbnail strip on
   the detail that swaps the slider's after-side (angles/stages).
@@ -50,8 +52,6 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
   phone, not wait to be discovered in Inbox.
 - [ ] **Haptics** (`expo-haptics`, needs a dev-client rebuild): light impact on tile
   taps and when the compare slider crosses center.
-- [ ] **Image loading polish**: blurhash placeholders computed at upload, returned by
-  the gallery API, consumed by `expo-image`.
 
 ## Housekeeping
 
