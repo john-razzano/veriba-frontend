@@ -59,6 +59,14 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="activity"
+        options={{
+          href: isMember ? null : undefined,
+          title: 'Activity',
+          tabBarIcon: ({ color }) => <Ionicons name="pulse-outline" size={20} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="new"
         options={{
           href: isMember ? null : undefined,
@@ -80,6 +88,16 @@ export default function TabsLayout() {
             }}>
               <Ionicons name="add" size={28} color="#fff" />
             </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          href: isMember ? null : undefined,
+          title: 'Messages',
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="chatbubbles-outline" size={20} color={color} />
           ),
         }}
       />

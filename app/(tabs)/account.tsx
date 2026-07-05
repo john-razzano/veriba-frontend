@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import { Image } from 'expo-image';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -163,15 +164,25 @@ function ProviderAccount() {
 
   return (
     <ScreenScroll contentContainerStyle={styles.content}>
-      <SectionCard>
-        <View style={styles.profileRow}>
-          <AvatarBadge initials={user?.initials ?? '…'} size={56} />
-          <View style={styles.profileMeta}>
-            <Text style={styles.profileName}>{user?.name ?? 'Loading profile…'}</Text>
-            <Text style={styles.profileEmail}>{user?.email ?? 'Fetching account data'}</Text>
-          </View>
+      <View style={styles.providerHeader}>
+        {practice?.avatarUrl ? (
+          <Image
+            source={{ uri: practice.avatarUrl }}
+            style={styles.providerAvatar}
+            transition={150}
+          />
+        ) : (
+          <AvatarBadge initials={user?.initials ?? '…'} size={72} />
+        )}
+        <Text style={styles.providerName}>{practice?.name ?? 'Loading practice…'}</Text>
+        <Text style={styles.providerSub}>
+          {user?.name ?? ''}
+          {user?.email ? ` · ${user.email}` : ''}
+        </Text>
+        <View style={styles.providerPill}>
+          <Text style={styles.providerPillText}>PROVIDER</Text>
         </View>
-      </SectionCard>
+      </View>
 
       <SectionCard>
         <Pressable
@@ -358,22 +369,39 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.82)',
     marginTop: 2,
   },
-  profileRow: {
-    flexDirection: 'row',
+  providerHeader: {
     alignItems: 'center',
-    gap: spacing.md,
+    gap: 6,
+    paddingTop: spacing.md,
   },
-  profileMeta: {
-    gap: 4,
+  providerAvatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: colors.bgInput,
   },
-  profileName: {
-    fontFamily: fonts.display.light,
-    fontSize: 24,
+  providerName: {
+    fontFamily: fonts.display.medium,
+    fontSize: 22,
     color: colors.text,
+    marginTop: 4,
   },
-  profileEmail: {
-    ...typography.bodySm,
+  providerSub: {
+    ...typography.bodyXs,
     color: colors.textLight,
+  },
+  providerPill: {
+    backgroundColor: colors.warningBg,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginTop: 2,
+  },
+  providerPillText: {
+    fontFamily: fonts.body.semibold,
+    fontSize: 10,
+    letterSpacing: 1,
+    color: colors.copper,
   },
   sectionTitle: {
     fontFamily: fonts.body.semibold,

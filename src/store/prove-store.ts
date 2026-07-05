@@ -1399,6 +1399,16 @@ configureVeribaApiAuth({
       tokenType: tokens.tokenType,
       isAuthenticated: Boolean(tokens.accessToken),
     });
+    // Persist rotations: the backend revokes the used refresh token, so
+    // keeping only the in-memory copy strands SecureStore with a dead pair
+    // and the next cold start logs the user out.
+    if (tokens.accessToken && tokens.refreshToken) {
+      void saveTokens({
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        tokenType: tokens.tokenType ?? 'bearer',
+      });
+    }
   },
   onUnauthorized: () => {
     void clearTokens();
