@@ -2,7 +2,7 @@ import { ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -18,6 +18,7 @@ import {
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 
+import { useProveStore } from '@/src/store/prove-store';
 import { navigationTheme } from '@/src/theme';
 
 export {
@@ -43,6 +44,16 @@ export default function RootLayout() {
     DMSans_600SemiBold,
     DMSans_700Bold,
   });
+  // Restore auth here, not in app/index.tsx: dev reloads and deep links can
+  // mount straight onto a restored route without ever rendering the index.
+  const restoreSession = useProveStore((state) => state.restoreSession);
+  const [sessionRestored, setSessionRestored] = useState(false);
+
+  useEffect(() => {
+    void restoreSession()
+      .catch(() => {})
+      .finally(() => setSessionRestored(true));
+  }, [restoreSession]);
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
@@ -50,12 +61,12 @@ export default function RootLayout() {
   }, [error]);
 
   useEffect(() => {
-    if (loaded) {
+    if (loaded && sessionRestored) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [loaded, sessionRestored]);
 
-  if (!loaded) {
+  if (!loaded || !sessionRestored) {
     return null;
   }
 

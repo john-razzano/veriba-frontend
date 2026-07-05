@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   Alert,
@@ -26,6 +26,7 @@ export default function LoginScreen() {
   const login = useProveStore((state) => state.login);
   const register = useProveStore((state) => state.register);
   const isAuthenticating = useProveStore((state) => state.isAuthenticating);
+  const isAuthenticated = useProveStore((state) => state.isAuthenticated);
   const authError = useProveStore((state) => state.authError);
   const [mode, setMode] = useState<AuthMode>('login');
   const [role, setRole] = useState<AccountRole>('member');
@@ -36,6 +37,11 @@ export default function LoginScreen() {
   const [practiceLocation, setPracticeLocation] = useState('');
   const [practiceWebsite, setPracticeWebsite] = useState('');
   const [submitStatus, setSubmitStatus] = useState<string | null>(null);
+
+  // Restored/dev-reload navigation can land here while already signed in.
+  if (isAuthenticated && !isAuthenticating) {
+    return <Redirect href="/(tabs)" />;
+  }
 
   const canSubmit =
     email.trim().length > 0 &&

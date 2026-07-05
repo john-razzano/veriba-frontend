@@ -999,9 +999,10 @@ export async function fetchPublicPractice(slug: string) {
 }
 
 /** Cross-clinic feed of published, consented cases (public — no auth). */
-export async function fetchPublicGallery(limit = 48, query?: string) {
+export async function fetchPublicGallery(limit = 48, query?: string, offset = 0) {
   const params = new URLSearchParams({ limit: String(limit) });
   if (query) params.set('query', query);
+  if (offset > 0) params.set('offset', String(offset));
   return request<{ sessions: PublicSessionCard[]; total: number }>(
     `/api/gallery/sessions?${params.toString()}`,
     { auth: false }
@@ -1104,6 +1105,25 @@ export async function listFollows() {
 
 export async function listApprovals() {
   return request<{ approvals: ApprovalItem[] }>('/api/me/approvals');
+}
+
+export type ActivityKind =
+  | 'approval_completed'
+  | 'case_published'
+  | 'credit_earned'
+  | 'credit_expiring';
+
+export type ActivityItem = {
+  id: string;
+  kind: ActivityKind;
+  text: string;
+  timestamp: string;
+  session_id?: string | null;
+};
+
+/** Derived member activity for the Inbox "Earlier" section. */
+export async function listMyActivity() {
+  return request<{ items: ActivityItem[]; total: number }>('/api/me/activity');
 }
 
 export type MyResultCard = PublicSessionCard & {

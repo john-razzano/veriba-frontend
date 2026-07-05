@@ -7,8 +7,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeforeAfterSlider } from '@/src/components/before-after-slider';
 import { loadApprovals } from '@/src/lib/me';
-import type { ApprovalItem } from '@/src/lib/veriba-api';
+import {
+  listMyActivity,
+  type ActivityItem,
+  type ActivityKind,
+  type ApprovalItem,
+} from '@/src/lib/veriba-api';
 import { colors, fonts, spacing, typography } from '@/src/theme';
+import { formatCompactDate } from '@/src/utils/format';
+
+const ACTIVITY_ICONS: Record<ActivityKind, { name: string; bg: string; tint: string }> = {
+  approval_completed: { name: 'shield-checkmark-outline', bg: colors.successBg, tint: colors.success },
+  case_published: { name: 'megaphone-outline', bg: colors.warningBg, tint: colors.copper },
+  credit_earned: { name: 'gift-outline', bg: colors.successBg, tint: colors.success },
+  credit_expiring: { name: 'time-outline', bg: colors.warningBg, tint: colors.copper },
+};
 
 /**
  * Consumer inbox (mockup C3): provider posts awaiting the patient's approval,
@@ -17,10 +30,15 @@ import { colors, fonts, spacing, typography } from '@/src/theme';
 export default function InboxScreen() {
   const router = useRouter();
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
 
   useFocusEffect(
     useCallback(() => {
       loadApprovals(true).then(setApprovals).catch(() => {});
+      // tolerates the endpoint not existing yet — section just stays hidden
+      listMyActivity()
+        .then((res) => setActivity(res.items))
+        .catch(() => {});
     }, [])
   );
 
@@ -76,8 +94,37 @@ export default function InboxScreen() {
           </Text>
         )}
 
-        {/* "Earlier" activity feed removed until a real /api/me/activity exists
-            (see TODO.md) — no fake data in the inbox. */}
+        {activity.length > 0 ? (
+          <>
+            <Text style={styles.groupLabel}>EARLIER</Text>
+            {activity.map((item) => {
+              const icon = ACTIVITY_ICONS[item.kind] ?? ACTIVITY_ICONS.case_published;
+              const body = (
+                <>
+                  <View style={[styles.actIcon, { backgroundColor: icon.bg }]}>
+                    <Ionicons name={icon.name as never} size={17} color={icon.tint} />
+                  </View>
+                  <View style={styles.actText}>
+                    <Text style={styles.actLine}>{item.text}</Text>
+                    <Text style={styles.actTime}>{formatCompactDate(item.timestamp)}</Text>
+                  </View>
+                </>
+              );
+              return item.session_id ? (
+                <Pressable
+                  key={item.id}
+                  style={styles.actItem}
+                  onPress={() => router.push(`/case/${item.session_id}` as Href)}>
+                  {body}
+                </Pressable>
+              ) : (
+                <View key={item.id} style={styles.actItem}>
+                  {body}
+                </View>
+              );
+            })}
+          </>
+        ) : null}
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </SafeAreaView>

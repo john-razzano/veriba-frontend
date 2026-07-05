@@ -33,20 +33,32 @@ export interface TreatmentBucket {
   imageUri: string;
 }
 
+const PAGE_SIZE = 48;
+
 let cases: FeedCase[] | null = null;
 let inflight: Promise<FeedCase[]> | null = null;
+let moreInflight: Promise<FeedCase[] | null> | null = null;
+// raw pagination cursor: counts unfiltered API rows, not mapped cases
+let rawOffset = 0;
+let rawTotal = Infinity;
+
+function mapPage(sessions: Parameters<typeof mapCardToFeedCase>[0][]): FeedCase[] {
+  return sessions
+    // concept demo spas ("* Demo") carry generated placeholder art —
+    // keep the consumer feed to real photography
+    .filter((s) => !s.practice.name.endsWith(' Demo'))
+    .map(mapCardToFeedCase)
+    .filter((c): c is FeedCase => c !== null);
+}
 
 export function loadFeedCases(force = false): Promise<FeedCase[]> {
   if (cases && !force) return Promise.resolve(cases);
   if (inflight && !force) return inflight;
-  inflight = fetchPublicGallery(48)
+  inflight = fetchPublicGallery(PAGE_SIZE)
     .then((res) => {
-      cases = res.sessions
-        // concept demo spas ("* Demo") carry generated placeholder art —
-        // keep the consumer feed to real photography
-        .filter((s) => !s.practice.name.endsWith(' Demo'))
-        .map(mapCardToFeedCase)
-        .filter((c): c is FeedCase => c !== null);
+      cases = mapPage(res.sessions);
+      rawOffset = res.sessions.length;
+      rawTotal = res.total;
       inflight = null;
       return cases;
     })
@@ -55,6 +67,32 @@ export function loadFeedCases(force = false): Promise<FeedCase[]> {
       throw error;
     });
   return inflight;
+}
+
+export function hasMoreFeedCases(): boolean {
+  return cases !== null && rawOffset < rawTotal;
+}
+
+/** Fetch the next page and append; resolves the full list, or null if done. */
+export function loadMoreFeedCases(): Promise<FeedCase[] | null> {
+  if (!cases || !hasMoreFeedCases()) return Promise.resolve(null);
+  if (moreInflight) return moreInflight;
+  moreInflight = fetchPublicGallery(PAGE_SIZE, undefined, rawOffset)
+    .then((res) => {
+      const existing = new Set((cases ?? []).map((c) => c.id));
+      const next = mapPage(res.sessions).filter((c) => !existing.has(c.id));
+      cases = [...(cases ?? []), ...next];
+      rawOffset += res.sessions.length;
+      rawTotal = res.total;
+      if (res.sessions.length === 0) rawTotal = rawOffset; // server exhausted
+      moreInflight = null;
+      return cases;
+    })
+    .catch((error) => {
+      moreInflight = null;
+      throw error;
+    });
+  return moreInflight;
 }
 
 /** One-off text search against the public gallery (uncached). */

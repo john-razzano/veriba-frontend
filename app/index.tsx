@@ -1,23 +1,10 @@
 import { Redirect } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { View } from 'react-native';
 
 import { useProveStore } from '@/src/store/prove-store';
 
+// Session restore happens in app/_layout.tsx before any route renders,
+// so by the time this mounts the auth state is settled.
 export default function IndexRoute() {
   const isAuthenticated = useProveStore((state) => state.isAuthenticated);
-  const restoreSession = useProveStore((state) => state.restoreSession);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    void restoreSession()
-      .catch(() => {})
-      .finally(() => setReady(true));
-  }, [restoreSession]);
-
-  if (!ready) {
-    return <View />;
-  }
-
   return <Redirect href={isAuthenticated ? '/(tabs)' : '/(auth)/login'} />;
 }

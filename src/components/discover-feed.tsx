@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MosaicFeed } from '@/src/components/mosaic-feed';
 import { type FeedCase } from '@/src/data/mock-feed';
-import { loadFeedCases } from '@/src/lib/gallery';
+import { hasMoreFeedCases, loadFeedCases, loadMoreFeedCases } from '@/src/lib/gallery';
 import { colors, fonts, spacing, typography } from '@/src/theme';
 
 const ALL = 'For you';
@@ -28,6 +28,7 @@ export function DiscoverFeed() {
   const [cases, setCases] = useState<FeedCase[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const load = useCallback((force = false) => {
     setFailed(false);
@@ -52,6 +53,17 @@ export function DiscoverFeed() {
     }
   }, []);
 
+  const onLoadMore = useCallback(() => {
+    if (loadingMore || !hasMoreFeedCases()) return;
+    setLoadingMore(true);
+    loadMoreFeedCases()
+      .then((all) => {
+        if (all) setCases([...all]);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMore(false));
+  }, [loadingMore]);
+
   // chips reflect the categories actually present in the live feed
   const filters = useMemo(() => {
     const categories = [...new Set((cases ?? []).map((c) => c.category).filter(Boolean))];
@@ -74,6 +86,13 @@ export function DiscoverFeed() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[1]}
+        scrollEventThrottle={250}
+        onScroll={({ nativeEvent }) => {
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          if (layoutMeasurement.height + contentOffset.y >= contentSize.height - 900) {
+            onLoadMore();
+          }
+        }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -124,6 +143,11 @@ export function DiscoverFeed() {
         ) : (
           <MosaicFeed cases={shownCases} onPressCase={openCase} />
         )}
+        {loadingMore ? (
+          <View style={styles.moreWrap}>
+            <ActivityIndicator color={colors.copper} />
+          </View>
+        ) : null}
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </SafeAreaView>
@@ -170,6 +194,7 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: fonts.body.semibold, fontSize: 11, color: colors.textMid },
   chipTextOn: { color: colors.white },
   stateWrap: { paddingTop: 80, alignItems: 'center', gap: spacing.md },
+  moreWrap: { paddingVertical: spacing.lg, alignItems: 'center' },
   stateText: { ...typography.bodySm, color: colors.textMid },
   retry: {
     borderWidth: 1,

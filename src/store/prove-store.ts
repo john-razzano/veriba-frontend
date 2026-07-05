@@ -364,7 +364,7 @@ function isUnauthorizedError(error: unknown) {
   return error instanceof VeribaApiError && error.status === 401;
 }
 
-function reportBootstrapFailure(context: 'login' | 'register', error: unknown) {
+function reportBootstrapFailure(context: 'login' | 'register' | 'restore', error: unknown) {
   console.error(`[store] bootstrap failed after ${context}:`, error);
 }
 
@@ -561,17 +561,18 @@ export const useProveStore = create<ProveStore>((set, get) => ({
       authProvider: 'email',
     });
 
-    try {
-      await get().bootstrap();
-    } catch (error) {
-      if (isUnauthorizedError(error)) {
-        await clearTokens();
-        set(createLoggedOutState(get().practice));
-        return;
-      }
-
-      throw error;
-    }
+    // Bootstrap in the background so app start isn't gated on the network;
+    // stale/invalid tokens drop back to the logged-out state.
+    void get()
+      .bootstrap()
+      .catch(async (error) => {
+        if (isUnauthorizedError(error)) {
+          await clearTokens();
+          set(createLoggedOutState(get().practice));
+          return;
+        }
+        reportBootstrapFailure('restore', error);
+      });
   },
 
   bootstrap: async () => {
