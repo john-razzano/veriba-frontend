@@ -22,13 +22,14 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
 
 ## Next — consumer surface
 
-- [ ] **Session restore after JS reload.** Reloads (and some cold starts) land on the
-  login screen despite tokens in SecureStore — restoreSession isn't kicking in
-  reliably. Annoying in dev; would log out real users on OTA updates.
-- [ ] **Inbox "Earlier" activity.** Needs a backend events feed (result viewed N
-  times, case published, credit expiring) + `GET /api/me/activity`; the mock version
-  was removed so the inbox shows only true things.
-- [ ] **Feed pagination** past the current 48-case load (plus infinite scroll).
+- [x] **Session restore after JS reload.** FIXED July 5 (`c5df5f3`) — restore moved to
+  the root layout (reloads could mount a restored route without ever rendering
+  app/index); bootstrap backgrounds; login redirects when already authed.
+- [ ] **Inbox "Earlier" activity.** Frontend wired July 5 (`c5df5f3`, hidden until the
+  endpoint exists); backend `GET /api/me/activity` spec'd in CONSUMER-API-SPEC §6
+  (derived from followups/credits — no new tables). Waiting on the backend agent.
+- [x] **Feed pagination.** DONE July 5 (`c5df5f3`) — infinite scroll pages the gallery
+  by raw offset with dedupe; needs >48 published cases to observe.
 
 ## Later — provider side & polish
 
