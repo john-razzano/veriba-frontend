@@ -58,11 +58,15 @@ by backend e2e side effects — again; see Housekeeping) · provider
 - [x] **Multi-photo cases.** DONE July 6 — `photos[]` live (migration `0006`),
   two Woodbury triptychs seeded; verified: "Final" / "In progress" thumbnail
   strip swaps the slider's after side on the Jan-14 Lip Filler case.
-- [ ] **Approval push notifications**: plumbing wired July 5 — expo-notifications
-  in the dev client, permission prompt + token registration on bootstrap,
-  deregistration on logout, backend sender spec'd (GROWTH-SPEC §4). **Delivery
-  stays dark until John adds an APNs key in EAS** (needs Apple dev account) and we
-  test on a physical device — simulators can't receive remote pushes.
+- [x] **Approval push notifications.** LIVE July 6 — EAS project `prove-agence`
+  linked, APNs key reused from John's Apple account, push entitlement in the
+  build, verified on John's physical iPhone: real followup → "shared your
+  results" banner, both on the lock screen and in-foreground
+  (NotificationHandler added — iOS silently drops foreground pushes without
+  one). Backend fixes (`1329983`): INFO logging for push attempts, resend
+  path passed `db=None` and silently skipped push. Device builds must sign
+  with the paid team (QUSDF5VAMQ), not the Personal Team — Personal Teams
+  can't use the push entitlement.
 - [x] **Haptics.** DONE July 5 — dev client rebuilt with expo-haptics (+
   expo-notifications); light impact on case-tile taps and when the compare slider
   crosses center. Feel it on device; simulator no-ops.
