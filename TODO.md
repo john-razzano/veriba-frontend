@@ -69,14 +69,16 @@ by backend e2e side effects — again; see Housekeeping) · provider
 
 ## Housekeeping
 
-- [ ] **Backend data pollution (for the backend agent).** The July 5 e2e runs
-  left "Peanut's Palace" (3 published sessions incl. a cartoon cherry image)
-  live in the public gallery — it doesn't end in " Demo" so the client filter
-  misses it. Also: `member2@veriba.app` was deleted (member3 is the new
-  canonical member) and Veriba Atelier's avatar + featured pin were reset by
-  the reseed. Ask the agent to (a) remove Peanut's Palace, (b) make e2e tests
-  use " Demo"-suffixed or auto-cleaned practices, (c) restore the Atelier
-  avatar/featured seed.
+- [x] **Backend data pollution.** FIXED July 6 (backend `07150d6`) — Peanut's
+  Palace deleted (6 sessions, 26 MinIO objects), all e2e tests now use
+  " Demo"-suffixed practices caught by `delete_synthetic_records`, Atelier
+  featured pin restored + auto-re-pinned by the seed, avatar back. Verified:
+  public gallery is 18 Atelier + 6 " Demo" (client-filtered) sessions.
+- [ ] **Purge seeded fake `page_views`** — backend agent running now: zero
+  the hardcoded per-session values in DB + seed script so Page Views /
+  Profile Views grow only from real public fetches. Frontend placeholder
+  sweep is done (`82ddaed`): trending chips derive from live data, custody
+  fallback honest, greeting clock-based, mock-feed.ts renamed feed-types.ts.
 - [ ] Desktop `verbia_real_before_after/split/` (failed first-pass splits) can be
   deleted; `split-v2/` is canonical and committed to the backend repo.
 - [ ] `docs/veriba-archireum-mockup.html` + `docs/veriba-feed-explorations.html` are
