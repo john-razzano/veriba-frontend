@@ -14,6 +14,12 @@ import {
   listSessionFollowUps,
   listSessions,
   updateMyPractice,
+} from '@/src/lib/veriba-api';
+import {
+  registerForPushNotifications,
+  unregisterPushToken,
+} from '@/src/lib/push';
+import {
   login as loginRequest,
   logout as logoutRequest,
   mapFollowUp,
@@ -541,6 +547,7 @@ export const useProveStore = create<ProveStore>((set, get) => ({
     } catch {
       // Ignore logout failures and clear local session anyway.
     } finally {
+      await unregisterPushToken().catch(() => {});
       await clearTokens();
       resetMemberState();
       set(createLoggedOutState(currentPractice));
@@ -584,6 +591,9 @@ export const useProveStore = create<ProveStore>((set, get) => ({
 
     try {
       const userResponse = await getCurrentUser();
+
+      // Fire-and-forget: no-ops until EAS push credentials exist (GROWTH-SPEC §4).
+      void registerForPushNotifications();
 
       if (userResponse.role === 'member') {
         set({

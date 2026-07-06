@@ -1,3 +1,4 @@
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
@@ -33,7 +34,14 @@ export function CaseTile({
 }: CaseTileProps) {
   return (
     <Pressable
-      onPress={onPress}
+      onPress={
+        onPress
+          ? () => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+              onPress();
+            }
+          : undefined
+      }
       style={({ pressed }) => [styles.tile, style, pressed && styles.pressed]}>
       <Image
         source={{ uri: afterUri }}

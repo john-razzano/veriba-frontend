@@ -21,6 +21,7 @@ const ACTIVITY_ICONS: Record<ActivityKind, { name: string; bg: string; tint: str
   case_published: { name: 'megaphone-outline', bg: colors.warningBg, tint: colors.copper },
   credit_earned: { name: 'gift-outline', bg: colors.successBg, tint: colors.success },
   credit_expiring: { name: 'time-outline', bg: colors.warningBg, tint: colors.copper },
+  consult_request: { name: 'chatbubble-ellipses-outline', bg: colors.warningBg, tint: colors.copper },
 };
 
 /**

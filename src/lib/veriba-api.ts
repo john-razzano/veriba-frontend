@@ -91,6 +91,8 @@ export type PracticeResponse = {
   booking_url?: string | null;
   services?: string[] | null;
   featured_session_id?: string | null;
+  hours?: Record<string, string | null> | null;
+  followers_count?: number;
   created_at: string;
   updated_at: string;
 };
@@ -116,6 +118,7 @@ export type SessionSummaryResponse = {
   before_image_url?: string | null;
   after_image_url?: string | null;
   page_views?: number | null;
+  saves_count?: number | null;
   captured_at?: string | null;
   published_at?: string | null;
   created_at: string;
@@ -146,6 +149,7 @@ export type SessionDetailResponse = SessionSummaryResponse & {
     filename?: string | null;
     url_slug?: string | null;
   } | null;
+  photos?: SessionPhoto[] | null;
 };
 
 export type SessionListResponse = {
@@ -710,6 +714,8 @@ export function mapPractice(practice: PracticeResponse, existing?: Practice | nu
     avatarUrl: practice.avatar_url ?? null,
     bookingUrl: practice.booking_url ?? '',
     featuredSessionId: practice.featured_session_id ?? null,
+    hours: practice.hours ?? null,
+    followersCount: practice.followers_count ?? 0,
     createdAt: practice.created_at,
     updatedAt: practice.updated_at,
   };
@@ -902,6 +908,7 @@ export function mapSession(
         ? mapSeo(session.seo, options?.practice)
         : options?.existing?.seo ?? null,
     pageViews: session.page_views ?? 0,
+    savesCount: session.saves_count ?? options?.existing?.savesCount ?? 0,
     chainOfCustody:
       'chain_of_custody' in session
         ? mapChainOfCustody(session.id, session.chain_of_custody)
@@ -978,11 +985,19 @@ export type PublicCustodyCheckpoint = {
   verified?: boolean;
 };
 
+export type SessionPhoto = {
+  id: string;
+  url: string;
+  blurhash?: string | null;
+  label?: string | null;
+};
+
 export type PublicCaseStudy = PublicSessionCard & {
   treatment_details?: string | null;
   page_views?: number;
   published_at?: string | null;
   provider?: { name?: string | null; initials?: string | null };
+  photos?: SessionPhoto[] | null;
   chain_of_custody?: {
     all_verified?: boolean;
     checkpoint_count?: number;
@@ -1035,6 +1050,7 @@ export type PublicPracticeCard = {
   services?: string[] | null;
   featured_treatment?: string | null;
   featured_image_url?: string | null;
+  hours?: Record<string, string | null> | null;
 };
 
 // --- Provider: manage the public practice page (PRACTICE-PROFILE-SPEC) ---
@@ -1047,6 +1063,7 @@ export type PracticeProfileUpdate = {
   booking_url?: string | null;
   services?: string[] | null;
   featured_session_id?: string | null;
+  hours?: Record<string, string | null> | null;
 };
 
 export async function updateMyPractice(payload: PracticeProfileUpdate) {
@@ -1124,7 +1141,8 @@ export type ActivityKind =
   | 'approval_completed'
   | 'case_published'
   | 'credit_earned'
-  | 'credit_expiring';
+  | 'credit_expiring'
+  | 'consult_request';
 
 export type ActivityItem = {
   id: string;
@@ -1147,6 +1165,68 @@ export type MyResultCard = PublicSessionCard & {
 /** The member's own sessions (matched by followup email), incl. unpublished. */
 export async function listMyResults() {
   return request<{ sessions: MyResultCard[]; total: number }>('/api/me/results');
+}
+
+// --- Consult requests (GROWTH-SPEC §1) ---
+
+export type ConsultRequestItem = {
+  id: string;
+  practice: { id: string; name: string; widget_slug?: string | null };
+  member?: { name?: string | null; initials?: string | null };
+  session?: { id: string; treatment?: string | null; after_image_url?: string | null } | null;
+  message?: string | null;
+  contact_email: string;
+  contact_phone?: string | null;
+  status: 'new' | 'handled';
+  created_at: string;
+  handled_at?: string | null;
+};
+
+/** Member asks a clinic for a consult (one-shot, not chat). 409 = already open. */
+export async function createConsultRequest(payload: {
+  practice_id: string;
+  session_id?: string | null;
+  message?: string | null;
+  contact_email: string;
+  contact_phone?: string | null;
+}) {
+  return request<{ consult: ConsultRequestItem }>('/api/me/consults', {
+    method: 'POST',
+    body: payload,
+  });
+}
+
+export async function listMyConsults() {
+  return request<{ consults: ConsultRequestItem[]; total: number }>('/api/me/consults');
+}
+
+/** Provider inbox for the Messages tab. */
+export async function listPracticeConsults(status: 'new' | 'handled' | 'all' = 'all') {
+  return request<{ consults: ConsultRequestItem[]; total: number }>(
+    `/api/consults?status=${status}`
+  );
+}
+
+export async function markConsultHandled(consultId: string) {
+  return request<{ consult: ConsultRequestItem }>(`/api/consults/${consultId}/handled`, {
+    method: 'POST',
+  });
+}
+
+// --- Push tokens (GROWTH-SPEC §4; delivery dark until APNs is configured) ---
+
+export async function registerPushToken(token: string, platform: 'ios' | 'android') {
+  return request<{ registered: boolean }>('/api/me/push-token', {
+    method: 'POST',
+    body: { token, platform },
+  });
+}
+
+export async function removePushToken(token: string) {
+  return request<{ removed: boolean }>('/api/me/push-token', {
+    method: 'DELETE',
+    body: { token },
+  });
 }
 
 export async function respondToApproval(

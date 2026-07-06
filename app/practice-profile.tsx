@@ -23,6 +23,16 @@ import { colors, fonts, radii, spacing, typography } from '@/src/theme';
 
 const BIO_MAX = 600;
 
+const HOURS_DAYS = [
+  { key: 'mon', label: 'Monday' },
+  { key: 'tue', label: 'Tuesday' },
+  { key: 'wed', label: 'Wednesday' },
+  { key: 'thu', label: 'Thursday' },
+  { key: 'fri', label: 'Friday' },
+  { key: 'sat', label: 'Saturday' },
+  { key: 'sun', label: 'Sunday' },
+] as const;
+
 /**
  * Provider editor for the public clinic page (PRACTICE-PROFILE-SPEC Phase 1).
  * Providers curate presentation; verified counts and custody stay derived.
@@ -37,6 +47,11 @@ export default function PracticeProfileScreen() {
   const [website, setWebsite] = useState(practice?.website ?? '');
   const [bookingUrl, setBookingUrl] = useState(practice?.bookingUrl ?? '');
   const [bio, setBio] = useState(practice?.bio ?? '');
+  const [hours, setHours] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      HOURS_DAYS.map((d) => [d.key, practice?.hours?.[d.key] ?? ''])
+    )
+  );
   const [avatarUri, setAvatarUri] = useState<string | null>(practice?.avatarUrl ?? null);
   const [avatarChanged, setAvatarChanged] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -67,6 +82,11 @@ export default function PracticeProfileScreen() {
         website: website.trim() || null,
         booking_url: bookingUrl.trim() || null,
         bio: bio.trim() || null,
+        hours: Object.values(hours).some((v) => v.trim())
+          ? Object.fromEntries(
+              HOURS_DAYS.map((d) => [d.key, hours[d.key]?.trim() || null])
+            )
+          : null,
       });
       if (avatarChanged && avatarUri) {
         await uploadPracticeAvatar({ uri: avatarUri });
@@ -157,6 +177,20 @@ export default function PracticeProfileScreen() {
             style={styles.bioInput}
           />
 
+          <Text style={styles.fieldLabel}>HOURS — LEAVE A DAY BLANK IF CLOSED</Text>
+          {HOURS_DAYS.map((day) => (
+            <View key={day.key} style={styles.hoursRow}>
+              <Text style={styles.hoursDay}>{day.label}</Text>
+              <AppInput
+                style={styles.hoursInput}
+                value={hours[day.key]}
+                onChangeText={(t) => setHours((prev) => ({ ...prev, [day.key]: t }))}
+                placeholder="9:00–17:00"
+                autoCapitalize="none"
+              />
+            </View>
+          ))}
+
           <View style={styles.actions}>
             <GradientButton
               label={saving ? 'Saving…' : 'Save public page'}
@@ -241,5 +275,8 @@ const styles = StyleSheet.create({
     color: colors.text,
     lineHeight: 19,
   },
+  hoursRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
+  hoursDay: { ...typography.bodySm, color: colors.textMid, width: 82 },
+  hoursInput: { flex: 1 },
   actions: { gap: spacing.sm, marginTop: spacing.lg },
 });

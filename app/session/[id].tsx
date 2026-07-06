@@ -426,6 +426,7 @@ export default function SessionDetailScreen() {
               <InfoRow label="Consent Level" value={consentLabel(session.consentTier)} />
               <InfoRow label="Images in Session" value={String(session.photos.length)} />
               <InfoRow label="Page Views" value={String(session.pageViews)} />
+              <InfoRow label="Saves by Members" value={String(session.savesCount)} />
             </View>
           )}
         </SectionCard>

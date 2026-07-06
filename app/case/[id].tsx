@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -9,6 +10,7 @@ import { BeforeAfterSlider } from '@/src/components/before-after-slider';
 import { getCachedCase, loadFeedCases } from '@/src/lib/gallery';
 import { ensureMemberState, isFollowed, isSaved, toggleFollow, toggleSave } from '@/src/lib/me';
 import { fetchPublicCaseStudy, type PublicCaseStudy } from '@/src/lib/veriba-api';
+import { useProveStore } from '@/src/store/prove-store';
 import { colors, fonts, radii, spacing } from '@/src/theme';
 import { formatCompactDate } from '@/src/utils/format';
 
@@ -29,6 +31,9 @@ export default function CaseDetailScreen() {
   const [study, setStudy] = useState<PublicCaseStudy | null>(null);
   const [saved, setSaved] = useState(id ? isSaved(id) : false);
   const [following, setFollowing] = useState(false);
+  // Multi-photo cases: which after-side rendition the slider shows (null = final after)
+  const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
+  const isMember = useProveStore((state) => state.user?.role === 'member');
 
   useEffect(() => {
     if (id) {
@@ -80,15 +85,18 @@ export default function CaseDetailScreen() {
     );
   }
 
+  const photos = study?.photos ?? [];
+  const activePhoto = photos.find((p) => p.id === activePhotoId) ?? null;
+
   return (
     <View style={styles.safe}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
         <View>
           <BeforeAfterSlider
             beforeUri={data.beforeUri}
-            afterUri={data.afterUri}
+            afterUri={activePhoto?.url ?? data.afterUri}
             beforeBlurhash={data.beforeBlurhash}
-            afterBlurhash={data.afterBlurhash}
+            afterBlurhash={activePhoto?.blurhash ?? data.afterBlurhash}
             height={320}
           />
           <SafeAreaView edges={['top']} style={styles.floatTop} pointerEvents="box-none">
@@ -97,6 +105,31 @@ export default function CaseDetailScreen() {
             </Pressable>
           </SafeAreaView>
         </View>
+
+        {photos.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.photoStrip}>
+            <PhotoThumb
+              uri={data.afterUri}
+              blurhash={data.afterBlurhash}
+              label="Final"
+              active={activePhotoId === null}
+              onPress={() => setActivePhotoId(null)}
+            />
+            {photos.map((photo) => (
+              <PhotoThumb
+                key={photo.id}
+                uri={photo.url}
+                blurhash={photo.blurhash ?? undefined}
+                label={photo.label ?? 'Angle'}
+                active={activePhotoId === photo.id}
+                onPress={() => setActivePhotoId(photo.id)}
+              />
+            ))}
+          </ScrollView>
+        ) : null}
 
         <View style={styles.clinRow}>
           <Pressable
@@ -175,6 +208,19 @@ export default function CaseDetailScreen() {
               const bookingUrl = study?.practice?.booking_url;
               if (bookingUrl) {
                 void Linking.openURL(bookingUrl);
+                return;
+              }
+              const practiceId = study?.practice?.id ?? data.practiceId;
+              if (isMember && practiceId) {
+                router.push({
+                  pathname: '/consult-request',
+                  params: {
+                    practiceId,
+                    practiceName: data.clinic,
+                    sessionId: id,
+                    treatment: data.treatment,
+                  },
+                } as never);
               } else {
                 const slug = study?.practice?.widget_slug ?? data.practiceSlug;
                 if (slug) router.push(`/clinic/${slug}` as never);
@@ -192,6 +238,38 @@ export default function CaseDetailScreen() {
         </View>
       </ScrollView>
     </View>
+  );
+}
+
+function PhotoThumb({
+  uri,
+  blurhash,
+  label,
+  active,
+  onPress,
+}: {
+  uri: string;
+  blurhash?: string;
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={[styles.thumb, active && styles.thumbActive]}>
+      <Image
+        source={{ uri }}
+        style={StyleSheet.absoluteFill}
+        contentFit="cover"
+        transition={120}
+        placeholder={blurhash ? { blurhash } : undefined}
+        placeholderContentFit="cover"
+      />
+      <View style={styles.thumbLabelWrap}>
+        <Text style={styles.thumbLabel} numberOfLines={1}>
+          {label}
+        </Text>
+      </View>
+    </Pressable>
   );
 }
 
@@ -219,6 +297,37 @@ const styles = StyleSheet.create({
   backRow: { flexDirection: 'row', alignItems: 'center', padding: spacing.md },
   backText: { fontFamily: fonts.body.medium, fontSize: 13, color: colors.textMid },
   empty: { fontFamily: fonts.body.regular, color: colors.textLight, padding: spacing.md },
+  photoStrip: {
+    gap: 7,
+    paddingHorizontal: spacing.md,
+    paddingTop: 10,
+  },
+  thumb: {
+    width: 64,
+    height: 64,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: colors.bgInput,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  thumbActive: { borderColor: colors.copper },
+  thumbLabelWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(18,12,7,0.55)',
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  thumbLabel: {
+    fontFamily: fonts.body.semibold,
+    fontSize: 7.5,
+    letterSpacing: 0.4,
+    color: colors.white,
+    textAlign: 'center',
+  },
   clinRow: {
     flexDirection: 'row',
     alignItems: 'center',

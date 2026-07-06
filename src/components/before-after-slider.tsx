@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useRef, useState } from 'react';
 import {
@@ -40,6 +41,19 @@ export function BeforeAfterSlider({
   const [w, setW] = useState(0);
   const [ratio, setRatio] = useState(0.5);
   const widthRef = useRef(0);
+  const sideRef = useRef<'before' | 'after' | null>(null);
+
+  const updateRatio = (locationX: number) => {
+    if (widthRef.current <= 0) return;
+    const next = clamp(locationX / widthRef.current, 0.04, 0.96);
+    const side = next < 0.5 ? 'before' : 'after';
+    // Tick when the divider crosses center — but not on the initial grab.
+    if (sideRef.current && sideRef.current !== side) {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    }
+    sideRef.current = side;
+    setRatio(next);
+  };
 
   const pan = useRef(
     PanResponder.create({
@@ -52,14 +66,11 @@ export function BeforeAfterSlider({
       onPanResponderTerminationRequest: () => false,
       onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: (e) => {
-        if (widthRef.current > 0) {
-          setRatio(clamp(e.nativeEvent.locationX / widthRef.current, 0.04, 0.96));
-        }
+        sideRef.current = null;
+        updateRatio(e.nativeEvent.locationX);
       },
       onPanResponderMove: (e) => {
-        if (widthRef.current > 0) {
-          setRatio(clamp(e.nativeEvent.locationX / widthRef.current, 0.04, 0.96));
-        }
+        updateRatio(e.nativeEvent.locationX);
       },
     })
   ).current;

@@ -19,7 +19,40 @@ import type { FeedCase } from '@/src/data/mock-feed';
 import { mapCardToFeedCase } from '@/src/lib/gallery';
 import { ensureMemberState, isFollowed, toggleFollow } from '@/src/lib/me';
 import { fetchPublicPractice, type PublicPracticeCard } from '@/src/lib/veriba-api';
+import { useProveStore } from '@/src/store/prove-store';
 import { colors, fonts, spacing, typography } from '@/src/theme';
+
+const DAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+const DAY_LABELS: Record<string, string> = {
+  mon: 'Mon',
+  tue: 'Tue',
+  wed: 'Wed',
+  thu: 'Thu',
+  fri: 'Fri',
+  sat: 'Sat',
+  sun: 'Sun',
+};
+
+/** Collapse identical consecutive day hours: Mon–Fri 9:00–17:00 · Sat 10:00–14:00. */
+function formatHours(hours: Record<string, string | null>): string[] {
+  const runs: { start: string; end: string; value: string | null }[] = [];
+  for (const day of DAY_ORDER) {
+    const value = hours[day] ?? null;
+    const last = runs[runs.length - 1];
+    if (last && last.value === value) {
+      last.end = day;
+    } else {
+      runs.push({ start: day, end: day, value });
+    }
+  }
+  return runs
+    .filter((r) => r.value)
+    .map((r) =>
+      r.start === r.end
+        ? `${DAY_LABELS[r.start]} ${r.value}`
+        : `${DAY_LABELS[r.start]}–${DAY_LABELS[r.end]} ${r.value}`
+    );
+}
 
 /** Public clinic profile: identity, follow, and every published case. */
 export default function ClinicScreen() {
@@ -29,6 +62,7 @@ export default function ClinicScreen() {
   const [cases, setCases] = useState<FeedCase[]>([]);
   const [failed, setFailed] = useState(false);
   const [following, setFollowing] = useState(false);
+  const isMember = useProveStore((state) => state.user?.role === 'member');
 
   useEffect(() => {
     if (!slug) return;
@@ -126,6 +160,18 @@ export default function ClinicScreen() {
                   <Text style={styles.followText}>Book consult</Text>
                 </Pressable>
               ) : null}
+              {isMember ? (
+                <Pressable
+                  style={styles.iconBtn}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/consult-request',
+                      params: { practiceId: practice.id, practiceName: practice.name },
+                    } as Href)
+                  }>
+                  <Ionicons name="chatbubble-ellipses-outline" size={15} color={colors.text} />
+                </Pressable>
+              ) : null}
               {website ? (
                 <Pressable
                   style={styles.siteBtn}
@@ -135,6 +181,33 @@ export default function ClinicScreen() {
                 </Pressable>
               ) : null}
             </View>
+
+            {practice.hours || practice.location ? (
+              <View style={styles.visitCard}>
+                {practice.hours
+                  ? formatHours(practice.hours).map((line) => (
+                      <View key={line} style={styles.visitRow}>
+                        <Ionicons name="time-outline" size={13} color={colors.textLight} />
+                        <Text style={styles.visitText}>{line}</Text>
+                      </View>
+                    ))
+                  : null}
+                <Pressable
+                  style={styles.visitRow}
+                  onPress={() =>
+                    void Linking.openURL(
+                      `https://maps.apple.com/?q=${encodeURIComponent(
+                        `${practice.name}, ${practice.location}`
+                      )}`
+                    )
+                  }>
+                  <Ionicons name="location-outline" size={13} color={colors.copper} />
+                  <Text style={[styles.visitText, styles.visitLink]}>
+                    {practice.location} · Open in Maps
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
           </View>
 
           {practice.featured_image_url ? (
@@ -247,6 +320,30 @@ const styles = StyleSheet.create({
   followBtnActive: { backgroundColor: 'transparent' },
   followText: { fontFamily: fonts.body.bold, fontSize: 12, color: colors.white },
   followTextActive: { color: colors.copper },
+  iconBtn: {
+    width: 33,
+    height: 33,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgCard,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  visitCard: {
+    alignSelf: 'stretch',
+    backgroundColor: colors.bgCard,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    marginTop: 14,
+    gap: 6,
+  },
+  visitRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  visitText: { ...typography.bodyXs, color: colors.textMid },
+  visitLink: { color: colors.copper, fontFamily: fonts.body.semibold },
   siteBtn: {
     flexDirection: 'row',
     alignItems: 'center',

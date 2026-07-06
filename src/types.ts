@@ -76,6 +76,8 @@ export interface Practice {
   avatarUrl: string | null;
   bookingUrl: string;
   featuredSessionId: string | null;
+  hours: Record<string, string | null> | null;
+  followersCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -195,6 +197,7 @@ export interface Session {
   publishedDestinations: PublishDestination[];
   seo: SEOData | null;
   pageViews: number;
+  savesCount: number;
   chainOfCustody: ChainOfCustody | null;
   createdAt: string;
   updatedAt: string;

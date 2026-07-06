@@ -43,21 +43,28 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
   pin/unpin-featured button on the published-session detail. Verified live:
   pin → alert → public page hero updates; unpin falls back to latest case.
   (Hide/reorder deliberately descoped — unpublish covers removal.)
-- [ ] **Phase 3 — growth layer**: native consult-request messaging (Book consult
-  currently opens the clinic's `booking_url`), hours/map (lat/lng columns exist),
-  provider analytics surfaced in-app (`page_views` is already tracked per case).
+- [ ] **Phase 3 — growth layer**: frontend wired July 5 against `GROWTH-SPEC.md`
+  (backend repo) — **awaiting backend agent**. Consult requests (member form via
+  clinic-page chat bubble / Book-consult fallback; provider Messages tab is now a
+  real inbox with mark-handled), hours editor + public display with Open-in-Maps
+  link (live now — link-out, no native map), per-case saves + follower counts.
+  Until the backend lands, Messages shows the empty state and consult submits fail.
 - [x] **Provider reskin (P1/P2/P4).** DONE July 5 (`c458545`) — dashboard mosaic with
   status pills, Activity screen grouped by approval state (surfaces "needs
   obscuration" on blur-gated cases), Messages placeholder tab, account header
   restyle, 5-item provider tab bar. Bonus fix: rotated auth tokens now persist to
   SecureStore (was silently logging users out after ~30 min + reload).
-- [ ] **Multi-photo cases.** The triptych `*_mid.jpg` extras sit unseeded in backend
-  `seed_assets/`; add `photos[]` to the case-study payload + a thumbnail strip on
-  the detail that swaps the slider's after-side (angles/stages).
-- [ ] **Approval push notifications** — a new followup should ping the member's
-  phone, not wait to be discovered in Inbox.
-- [ ] **Haptics** (`expo-haptics`, needs a dev-client rebuild): light impact on tile
-  taps and when the compare slider crosses center.
+- [ ] **Multi-photo cases**: frontend thumbnail strip on the case detail done
+  July 5 (swaps the slider's after side, "Final" + labeled angles) — appears once
+  the backend ships `photos[]` + seeds the two `*_mid.jpg` triptychs (GROWTH-SPEC §2).
+- [ ] **Approval push notifications**: plumbing wired July 5 — expo-notifications
+  in the dev client, permission prompt + token registration on bootstrap,
+  deregistration on logout, backend sender spec'd (GROWTH-SPEC §4). **Delivery
+  stays dark until John adds an APNs key in EAS** (needs Apple dev account) and we
+  test on a physical device — simulators can't receive remote pushes.
+- [x] **Haptics.** DONE July 5 — dev client rebuilt with expo-haptics (+
+  expo-notifications); light impact on case-tile taps and when the compare slider
+  crosses center. Feel it on device; simulator no-ops.
 
 ## Housekeeping
 

@@ -74,7 +74,15 @@ function ProviderDashboard() {
         <View style={styles.statRow}>
           <StatCard value={String(publishedCount)} label="Published" trend="Live on site" />
           <StatCard value={String(pendingCount)} label="Pending" trend="Needs follow-through" />
-          <StatCard value={formatNumber(totalViews)} label="Profile Views" trend="All time" />
+          <StatCard
+            value={formatNumber(totalViews)}
+            label="Profile Views"
+            trend={
+              practice?.followersCount
+                ? `${formatNumber(practice.followersCount)} followers`
+                : 'All time'
+            }
+          />
         </View>
 
         <View style={styles.sectionHeading}>
