@@ -74,11 +74,15 @@ by backend e2e side effects — again; see Housekeeping) · provider
   " Demo"-suffixed practices caught by `delete_synthetic_records`, Atelier
   featured pin restored + auto-re-pinned by the seed, avatar back. Verified:
   public gallery is 18 Atelier + 6 " Demo" (client-filtered) sessions.
-- [ ] **Purge seeded fake `page_views`** — backend agent running now: zero
-  the hardcoded per-session values in DB + seed script so Page Views /
-  Profile Views grow only from real public fetches. Frontend placeholder
-  sweep is done (`82ddaed`): trending chips derive from live data, custody
-  fallback honest, greeting clock-based, mock-feed.ts renamed feed-types.ts.
+- [x] **Purge seeded fake `page_views`.** DONE July 6 (backend `15d5b1f`) —
+  all seeded view counts zeroed in DB and removed from the seed script; the
+  three concept " Demo" practices deleted too, so the public gallery is
+  exactly Atelier's 18 real cases. Verified in-app: dashboard shows
+  0 Profile Views; counts grow only from real public fetches now. Frontend
+  placeholder sweep done (`82ddaed`): trending chips derive from live data,
+  custody fallback honest, greeting clock-based, mock-feed.ts →
+  feed-types.ts. The client-side " Demo" feed filter stays as a safety net
+  against future e2e leaks.
 - [ ] Desktop `verbia_real_before_after/split/` (failed first-pass splits) can be
   deleted; `split-v2/` is canonical and committed to the backend repo.
 - [ ] `docs/veriba-archireum-mockup.html` + `docs/veriba-feed-explorations.html` are
