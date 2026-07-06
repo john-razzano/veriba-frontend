@@ -57,14 +57,12 @@ function ProviderDashboard() {
     }
   }, [refreshSessions, refreshPracticeStats]);
 
-  const publishedCount =
-    practiceStats?.totalPublished ??
-    sessions.filter((session) => session.status === 'published').length;
-  const pendingCount =
-    practiceStats?.totalPending ??
-    sessions.filter((session) =>
-      ['draft', 'pending_after', 'pending_consent', 'ready_to_publish'].includes(session.status)
-    ).length;
+  const published = sessions.filter((session) => session.status === 'published');
+  const pending = sessions.filter((session) =>
+    ['draft', 'pending_after', 'pending_consent', 'ready_to_publish'].includes(session.status)
+  );
+  const publishedCount = practiceStats?.totalPublished ?? published.length;
+  const pendingCount = practiceStats?.totalPending ?? pending.length;
   const totalViews =
     practiceStats?.profileViewsTotal ?? sessions.reduce((sum, session) => sum + session.pageViews, 0);
 
@@ -92,12 +90,6 @@ function ProviderDashboard() {
           />
         </View>
 
-        <View style={styles.sectionHeading}>
-          <Text style={styles.sectionTitle}>RECENT CASES</Text>
-          <Text style={styles.sectionCount}>
-            {isBootstrapping ? 'Refreshing…' : `${sessions.length} total`}
-          </Text>
-        </View>
       </View>
 
       <ScrollView
@@ -110,42 +102,101 @@ function ProviderDashboard() {
             tintColor={colors.copper}
           />
         }>
-        {sessions.length > 0 ? (
-          <View style={styles.grid}>
-            {Array.from({ length: Math.ceil(sessions.length / 3) }, (_, row) => (
-              <View key={row} style={styles.gridRow}>
-                {sessions.slice(row * 3, row * 3 + 3).map((session) => (
-                  <ProviderTile
-                    key={session.id}
-                    session={session}
-                    onPress={() => router.push(`/session/${session.id}`)}
-                  />
-                ))}
-                {sessions.slice(row * 3, row * 3 + 3).length < 3
-                  ? Array.from(
-                      { length: 3 - sessions.slice(row * 3, row * 3 + 3).length },
-                      (_, i) => <View key={`pad-${i}`} style={styles.tilePad} />
-                    )
-                  : null}
-              </View>
-            ))}
-          </View>
-        ) : (
+        {pending.length > 0 ? (
+          <>
+            <View style={styles.sectionHeading}>
+              <Text style={styles.sectionTitle}>PENDING</Text>
+              <Text style={styles.sectionCount}>Needs follow-through</Text>
+            </View>
+            <SessionGrid
+              sessions={pending}
+              showStatus
+              onPressSession={(id) => router.push(`/session/${id}`)}
+            />
+          </>
+        ) : null}
+
+        {published.length > 0 ? (
+          <>
+            <View style={styles.sectionHeading}>
+              <Text style={styles.sectionTitle}>PUBLISHED</Text>
+              <Text style={styles.sectionCount}>
+                {isBootstrapping ? 'Refreshing…' : `${published.length} live`}
+              </Text>
+            </View>
+            <SessionGrid
+              sessions={published}
+              featuredSessionId={practice?.featuredSessionId ?? null}
+              onPressSession={(id) => router.push(`/session/${id}`)}
+            />
+          </>
+        ) : null}
+
+        {sessions.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>No cases yet</Text>
             <Text style={styles.emptyText}>
               Capture your first before & after with the ＋ button to start your gallery.
             </Text>
           </View>
-        )}
+        ) : null}
         <View style={{ height: spacing.xl }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-/** Dashboard mosaic tile (mockup P1): after-forward image + status pill. */
-function ProviderTile({ session, onPress }: { session: Session; onPress: () => void }) {
+function SessionGrid({
+  sessions,
+  featuredSessionId,
+  showStatus,
+  onPressSession,
+}: {
+  sessions: Session[];
+  featuredSessionId?: string | null;
+  showStatus?: boolean;
+  onPressSession: (id: string) => void;
+}) {
+  return (
+    <View style={styles.grid}>
+      {Array.from({ length: Math.ceil(sessions.length / 3) }, (_, row) => (
+        <View key={row} style={styles.gridRow}>
+          {sessions.slice(row * 3, row * 3 + 3).map((session) => (
+            <ProviderTile
+              key={session.id}
+              session={session}
+              featured={session.id === featuredSessionId}
+              showStatus={showStatus}
+              onPress={() => onPressSession(session.id)}
+            />
+          ))}
+          {sessions.slice(row * 3, row * 3 + 3).length < 3
+            ? Array.from(
+                { length: 3 - sessions.slice(row * 3, row * 3 + 3).length },
+                (_, i) => <View key={`pad-${i}`} style={styles.tilePad} />
+              )
+            : null}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * Dashboard mosaic tile (mockup P1): after-forward image. Pending tiles carry
+ * their workflow pill; published tiles are clean except the ★ featured badge.
+ */
+function ProviderTile({
+  session,
+  featured,
+  showStatus,
+  onPress,
+}: {
+  session: Session;
+  featured?: boolean;
+  showStatus?: boolean;
+  onPress: () => void;
+}) {
   const image = session.afterPhotoUri ?? session.beforePhotoUri;
   return (
     <Pressable style={styles.tile} onPress={onPress}>
@@ -167,9 +218,16 @@ function ProviderTile({ session, onPress }: { session: Session; onPress: () => v
         style={StyleSheet.absoluteFill}
         pointerEvents="none"
       />
-      <View style={styles.tileStatus}>
-        <StatusPill status={session.status} />
-      </View>
+      {showStatus ? (
+        <View style={styles.tileStatus}>
+          <StatusPill status={session.status} />
+        </View>
+      ) : featured ? (
+        <View style={styles.featuredPill}>
+          <Ionicons name="star" size={8} color={colors.white} />
+          <Text style={styles.featuredText}>FEATURED</Text>
+        </View>
+      ) : null}
       <View style={styles.tileLab}>
         <Text style={styles.tileTreatment} numberOfLines={1}>
           {session.treatment}
@@ -212,6 +270,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
   },
   sectionTitle: {
     ...typography.label,
@@ -244,6 +305,24 @@ const styles = StyleSheet.create({
     left: 6,
     transform: [{ scale: 0.85 }],
     transformOrigin: 'top left',
+  },
+  featuredPill: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: colors.copper,
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  featuredText: {
+    fontFamily: fonts.body.bold,
+    fontSize: 7,
+    letterSpacing: 0.8,
+    color: colors.white,
   },
   tileLab: { position: 'absolute', left: 7, right: 7, bottom: 6 },
   tileTreatment: {
