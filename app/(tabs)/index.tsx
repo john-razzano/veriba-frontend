@@ -13,6 +13,13 @@ import { colors, fonts, spacing, typography } from '@/src/theme';
 import { formatNumber } from '@/src/utils/format';
 import type { Session } from '@/src/types';
 
+function timeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export default function HomeScreen() {
   const role = useProveStore((state) => state.user?.role);
 
@@ -65,7 +72,7 @@ function ProviderDashboard() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.staticTop}>
         <View style={styles.header}>
-          <Text style={styles.greeting}>Good afternoon</Text>
+          <Text style={styles.greeting}>{timeGreeting()}</Text>
           <Text style={styles.subheading}>
             {practice ? `${practice.name} · ${practice.location}` : 'Loading practice details…'}
           </Text>

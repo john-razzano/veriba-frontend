@@ -2,7 +2,7 @@ import { Dimensions, StyleSheet, View } from 'react-native';
 
 import { AutoRevealTile } from '@/src/components/auto-reveal-tile';
 import { CaseTile } from '@/src/components/case-tile';
-import type { FeedCase } from '@/src/data/mock-feed';
+import type { FeedCase } from '@/src/data/feed-types';
 
 interface MosaicFeedProps {
   cases: FeedCase[];

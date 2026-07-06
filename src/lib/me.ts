@@ -1,6 +1,6 @@
 // Member interaction state: saves, follows, pending approvals. Thin in-memory
 // cache over /api/me/* with optimistic toggles.
-import type { FeedCase } from '@/src/data/mock-feed';
+import type { FeedCase } from '@/src/data/feed-types';
 import { mapCardToFeedCase } from '@/src/lib/gallery';
 import {
   followPractice,

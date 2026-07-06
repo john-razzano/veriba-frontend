@@ -185,7 +185,7 @@ export default function CaseDetailScreen() {
             v={
               study?.chain_of_custody?.checkpoints
                 ? `${study.chain_of_custody.checkpoints.length} checkpoints · hash-locked`
-                : '2 · hash-locked'
+                : '—'
             }
           />
           <Row k="Provider" v={study?.provider?.name ?? data.clinic} last />

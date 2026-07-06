@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CaseTile } from '@/src/components/case-tile';
 import { AvatarBadge } from '@/src/components/ui';
-import type { FeedCase } from '@/src/data/mock-feed';
+import type { FeedCase } from '@/src/data/feed-types';
 import { loadFollowedClinics, loadSavedCases, toggleFollow } from '@/src/lib/me';
 import type { PublicPracticeCard } from '@/src/lib/veriba-api';
 import { colors, fonts, spacing, typography } from '@/src/theme';

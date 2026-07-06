@@ -6,8 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CaseTile } from '@/src/components/case-tile';
 import { AvatarBadge } from '@/src/components/ui';
-import type { FeedCase } from '@/src/data/mock-feed';
-import { TRENDING_TREATMENTS } from '@/src/data/mock-feed';
+import type { FeedCase } from '@/src/data/feed-types';
 import {
   galleryClinics,
   galleryTreatmentBuckets,
@@ -109,14 +108,21 @@ export default function SearchScreen() {
           </>
         ) : (
           <>
-        <Text style={styles.groupLabel}>TRENDING</Text>
-        <View style={styles.trend}>
-          {TRENDING_TREATMENTS.map((t) => (
-            <Pressable key={t} onPress={() => openTreatment(t)} style={styles.trendChip}>
-              <Text style={styles.trendChipText}>{t}</Text>
-            </Pressable>
-          ))}
-        </View>
+        {buckets.length ? (
+          <>
+            <Text style={styles.groupLabel}>TRENDING</Text>
+            <View style={styles.trend}>
+              {buckets.slice(0, 5).map((bucket) => (
+                <Pressable
+                  key={bucket.treatment}
+                  onPress={() => openTreatment(bucket.treatment)}
+                  style={styles.trendChip}>
+                  <Text style={styles.trendChipText}>{bucket.treatment}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        ) : null}
 
         <Text style={styles.groupLabel}>BROWSE BY TREATMENT</Text>
         <View style={styles.browseGrid}>

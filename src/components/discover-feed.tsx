@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MosaicFeed } from '@/src/components/mosaic-feed';
-import { type FeedCase } from '@/src/data/mock-feed';
+import { type FeedCase } from '@/src/data/feed-types';
 import { hasMoreFeedCases, loadFeedCases, loadMoreFeedCases } from '@/src/lib/gallery';
 import { colors, fonts, spacing, typography } from '@/src/theme';
 

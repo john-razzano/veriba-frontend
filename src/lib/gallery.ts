@@ -1,7 +1,7 @@
 // Consumer discovery data: fetches the public gallery once and caches it in
 // memory for the session. Replaces the pravatar mock feed.
 import { fetchPublicGallery, type PublicSessionCard } from '@/src/lib/veriba-api';
-import type { FeedCase } from '@/src/data/mock-feed';
+import type { FeedCase } from '@/src/data/feed-types';
 
 export function mapCardToFeedCase(s: PublicSessionCard): FeedCase | null {
   if (!s.before_image_url || !s.after_image_url) return null;
