@@ -11,6 +11,17 @@ import { registerPushToken, removePushToken } from '@/src/lib/veriba-api';
  * whole module no-ops. Simulators can never receive remote pushes.
  */
 
+// Without a handler iOS silently drops notifications that arrive while the
+// app is foregrounded — the user just never sees them.
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
 let currentToken: string | null = null;
 
 export async function registerForPushNotifications(): Promise<void> {
@@ -26,14 +37,20 @@ export async function registerForPushNotifications(): Promise<void> {
 
     const projectId =
       Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-    if (!projectId) return; // EAS not set up yet — plumbing stays dormant
+    if (!projectId) {
+      console.log('[push] no EAS projectId — skipping registration');
+      return; // EAS not set up yet — plumbing stays dormant
+    }
 
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
+    console.log('[push] expo token:', token);
     if (!token || token === currentToken) return;
     await registerPushToken(token, Platform.OS === 'android' ? 'android' : 'ios');
+    console.log('[push] token registered with backend');
     currentToken = token;
-  } catch {
+  } catch (error) {
     // Missing credentials, simulator, or network — all fine to ignore.
+    console.log('[push] registration failed:', error);
   }
 }
 
