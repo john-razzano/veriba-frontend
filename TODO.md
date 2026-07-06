@@ -1,11 +1,11 @@
 # Veriba — working TODO
 
-State as of July 5, 2026: full two-sided loop is live against the real
-backend — members browse/save/follow/search/approve-with-signature/earn credits/book;
-providers document, request consent, publish, and manage their public page
-(bio/avatar/booking + featured pin + services, all persisted).
-Backend `ae383e8` · DB at migration `0005`, 56/56 tests.
-Test accounts: member `member2@veriba.app` / `supersecret1` · provider
+State as of July 6, 2026: full two-sided loop is live against the real
+backend, now including the Phase 3 growth layer — consult requests, hours,
+multi-photo cases, analytics counts, push plumbing (delivery pending APNs).
+Backend `a99a434` · DB at migration `0006`, 74/74 tests.
+Test accounts: member `member3@veriba.app` / `supersecret1` (member2 was wiped
+by backend e2e side effects — again; see Housekeeping) · provider
 `owner+atelier@veriba-demo.studio` / `veriba-demo-2026`.
 
 ## Now — correctness & security
@@ -43,20 +43,21 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
   pin/unpin-featured button on the published-session detail. Verified live:
   pin → alert → public page hero updates; unpin falls back to latest case.
   (Hide/reorder deliberately descoped — unpublish covers removal.)
-- [ ] **Phase 3 — growth layer**: frontend wired July 5 against `GROWTH-SPEC.md`
-  (backend repo) — **awaiting backend agent**. Consult requests (member form via
-  clinic-page chat bubble / Book-consult fallback; provider Messages tab is now a
-  real inbox with mark-handled), hours editor + public display with Open-in-Maps
-  link (live now — link-out, no native map), per-case saves + follower counts.
-  Until the backend lands, Messages shows the empty state and consult submits fail.
+- [x] **Phase 3 — growth layer.** DONE July 6 (backend `a99a434`, migration
+  `0006`, 74/74 tests). Verified live end-to-end: member sent a consult request
+  from the clinic-page chat bubble (email prefilled, duplicate correctly 409s),
+  provider's Messages inbox received it and marked it handled; hours render
+  collapsed ("Mon–Fri 9:00–17:00 · Sat 10:00–14:00") with Open-in-Maps;
+  per-case saves + follower counts wired (save by member3 → saves_count 1
+  confirmed).
 - [x] **Provider reskin (P1/P2/P4).** DONE July 5 (`c458545`) — dashboard mosaic with
   status pills, Activity screen grouped by approval state (surfaces "needs
   obscuration" on blur-gated cases), Messages placeholder tab, account header
   restyle, 5-item provider tab bar. Bonus fix: rotated auth tokens now persist to
   SecureStore (was silently logging users out after ~30 min + reload).
-- [ ] **Multi-photo cases**: frontend thumbnail strip on the case detail done
-  July 5 (swaps the slider's after side, "Final" + labeled angles) — appears once
-  the backend ships `photos[]` + seeds the two `*_mid.jpg` triptychs (GROWTH-SPEC §2).
+- [x] **Multi-photo cases.** DONE July 6 — `photos[]` live (migration `0006`),
+  two Woodbury triptychs seeded; verified: "Final" / "In progress" thumbnail
+  strip swaps the slider's after side on the Jan-14 Lip Filler case.
 - [ ] **Approval push notifications**: plumbing wired July 5 — expo-notifications
   in the dev client, permission prompt + token registration on bootstrap,
   deregistration on logout, backend sender spec'd (GROWTH-SPEC §4). **Delivery
@@ -68,6 +69,14 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
 
 ## Housekeeping
 
+- [ ] **Backend data pollution (for the backend agent).** The July 5 e2e runs
+  left "Peanut's Palace" (3 published sessions incl. a cartoon cherry image)
+  live in the public gallery — it doesn't end in " Demo" so the client filter
+  misses it. Also: `member2@veriba.app` was deleted (member3 is the new
+  canonical member) and Veriba Atelier's avatar + featured pin were reset by
+  the reseed. Ask the agent to (a) remove Peanut's Palace, (b) make e2e tests
+  use " Demo"-suffixed or auto-cleaned practices, (c) restore the Atelier
+  avatar/featured seed.
 - [ ] Desktop `verbia_real_before_after/split/` (failed first-pass splits) can be
   deleted; `split-v2/` is canonical and committed to the backend repo.
 - [ ] `docs/veriba-archireum-mockup.html` + `docs/veriba-feed-explorations.html` are
