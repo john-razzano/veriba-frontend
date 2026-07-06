@@ -8,6 +8,7 @@ type LabelVariant = 'default' | 'small' | 'none';
 
 interface CaseTileProps {
   afterUri: string;
+  blurhash?: string;
   treatment: string;
   clinic: string;
   /** 'none' = bare image (Instagram-style small feed tiles); 'small' = compact grids */
@@ -23,6 +24,7 @@ interface CaseTileProps {
  */
 export function CaseTile({
   afterUri,
+  blurhash,
   treatment,
   clinic,
   labelVariant = 'default',
@@ -38,6 +40,8 @@ export function CaseTile({
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         transition={200}
+        placeholder={blurhash ? { blurhash } : undefined}
+        placeholderContentFit="cover"
       />
       {labelVariant !== 'none' ? (
         <>

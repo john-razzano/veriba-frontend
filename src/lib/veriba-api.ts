@@ -87,7 +87,10 @@ export type PracticeResponse = {
   owner_id?: string | null;
   bio?: string | null;
   avatar_url?: string | null;
+  avatar_blurhash?: string | null;
   booking_url?: string | null;
+  services?: string[] | null;
+  featured_session_id?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -693,7 +696,8 @@ export function mapPractice(practice: PracticeResponse, existing?: Practice | nu
     coordinates: deriveCoordinates(practice),
     website: practice.website ?? '',
     widgetSlug: practice.widget_slug ?? slugify(practice.name),
-    servicesOffered: existing?.servicesOffered ?? [...DEFAULT_SERVICES_OFFERED],
+    servicesOffered:
+      practice.services ?? existing?.servicesOffered ?? [...DEFAULT_SERVICES_OFFERED],
     defaultDiscounts: {
       full: practice.default_discounts?.full ?? 150,
       partial: practice.default_discounts?.partial ?? 75,
@@ -705,6 +709,7 @@ export function mapPractice(practice: PracticeResponse, existing?: Practice | nu
     bio: practice.bio ?? '',
     avatarUrl: practice.avatar_url ?? null,
     bookingUrl: practice.booking_url ?? '',
+    featuredSessionId: practice.featured_session_id ?? null,
     createdAt: practice.created_at,
     updatedAt: practice.updated_at,
   };
@@ -950,6 +955,8 @@ export type PublicSessionCard = {
   category: string;
   before_image_url?: string | null;
   after_image_url?: string | null;
+  before_blurhash?: string | null;
+  after_blurhash?: string | null;
   published_at?: string | null;
   practice: {
     id: string;
@@ -1023,7 +1030,11 @@ export type PublicPracticeCard = {
   followed_at?: string;
   bio?: string | null;
   avatar_url?: string | null;
+  avatar_blurhash?: string | null;
   booking_url?: string | null;
+  services?: string[] | null;
+  featured_treatment?: string | null;
+  featured_image_url?: string | null;
 };
 
 // --- Provider: manage the public practice page (PRACTICE-PROFILE-SPEC) ---
@@ -1034,6 +1045,8 @@ export type PracticeProfileUpdate = {
   website?: string | null;
   bio?: string | null;
   booking_url?: string | null;
+  services?: string[] | null;
+  featured_session_id?: string | null;
 };
 
 export async function updateMyPractice(payload: PracticeProfileUpdate) {

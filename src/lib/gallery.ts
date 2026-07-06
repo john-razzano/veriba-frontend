@@ -15,6 +15,8 @@ export function mapCardToFeedCase(s: PublicSessionCard): FeedCase | null {
     category: s.category,
     beforeUri: s.before_image_url,
     afterUri: s.after_image_url,
+    beforeBlurhash: s.before_blurhash ?? undefined,
+    afterBlurhash: s.after_blurhash ?? undefined,
   };
 }
 
@@ -31,6 +33,7 @@ export interface TreatmentBucket {
   treatment: string;
   caseCount: number;
   imageUri: string;
+  blurhash?: string;
 }
 
 const PAGE_SIZE = 48;
@@ -148,6 +151,7 @@ export function galleryTreatmentBuckets(list: FeedCase[]): TreatmentBucket[] {
         treatment: c.treatment,
         caseCount: 1,
         imageUri: c.afterUri,
+        blurhash: c.afterBlurhash,
       });
     }
   }

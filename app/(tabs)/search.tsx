@@ -96,6 +96,7 @@ export default function SearchScreen() {
                     <CaseTile
                       key={c.id}
                       afterUri={c.afterUri}
+                      blurhash={c.afterBlurhash}
                       treatment={c.treatment}
                       clinic={c.clinic}
                       labelVariant="small"
@@ -125,6 +126,7 @@ export default function SearchScreen() {
                 <CaseTile
                   key={bucket.treatment}
                   afterUri={bucket.imageUri}
+                  blurhash={bucket.blurhash}
                   treatment={bucket.treatment}
                   clinic={`${bucket.caseCount} ${bucket.caseCount === 1 ? 'case' : 'cases'}`}
                   labelVariant="small"

@@ -75,6 +75,7 @@ export interface Practice {
   bio: string;
   avatarUrl: string | null;
   bookingUrl: string;
+  featuredSessionId: string | null;
   createdAt: string;
   updatedAt: string;
 }

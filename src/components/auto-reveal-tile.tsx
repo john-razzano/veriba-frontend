@@ -17,6 +17,8 @@ import { colors, fonts } from '@/src/theme';
 interface AutoRevealTileProps {
   beforeUri: string;
   afterUri: string;
+  beforeBlurhash?: string;
+  afterBlurhash?: string;
   treatment: string;
   clinic: string;
   /** stagger so multiple tiles don't sweep in unison (ms) */
@@ -33,6 +35,8 @@ interface AutoRevealTileProps {
 export function AutoRevealTile({
   beforeUri,
   afterUri,
+  beforeBlurhash,
+  afterBlurhash,
   treatment,
   clinic,
   delay = 0,
@@ -73,6 +77,8 @@ export function AutoRevealTile({
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         transition={200}
+        placeholder={afterBlurhash ? { blurhash: afterBlurhash } : undefined}
+        placeholderContentFit="cover"
       />
 
       <Animated.View style={[styles.beforeWrap, beforeStyle]}>

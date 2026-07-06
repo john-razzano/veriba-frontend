@@ -61,6 +61,10 @@ export default function MyResultsScreen() {
                       <View style={styles.tileWrap}>
                         <CaseTile
                           afterUri={image}
+                          blurhash={
+                            (r.after_image_url ? r.after_blurhash : r.before_blurhash) ??
+                            undefined
+                          }
                           treatment={r.treatment}
                           clinic={r.practice.name}
                           onPress={

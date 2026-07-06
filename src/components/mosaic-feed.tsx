@@ -37,6 +37,8 @@ export function MosaicFeed({ cases, onPressCase }: MosaicFeedProps) {
         style={styles.hero}
         beforeUri={hero.beforeUri}
         afterUri={hero.afterUri}
+        beforeBlurhash={hero.beforeBlurhash}
+        afterBlurhash={hero.afterBlurhash}
         treatment={hero.treatment}
         clinic={hero.clinic}
         delay={heroLeft ? 0 : 1300}
@@ -51,6 +53,7 @@ export function MosaicFeed({ cases, onPressCase }: MosaicFeedProps) {
             <CaseTile
               key={item.id}
               afterUri={item.afterUri}
+              blurhash={item.afterBlurhash}
               treatment={item.treatment}
               clinic={item.clinic}
               labelVariant="none"
@@ -75,6 +78,7 @@ export function MosaicFeed({ cases, onPressCase }: MosaicFeedProps) {
             <CaseTile
               key={item.id}
               afterUri={item.afterUri}
+              blurhash={item.afterBlurhash}
               treatment={item.treatment}
               clinic={item.clinic}
               labelVariant="none"

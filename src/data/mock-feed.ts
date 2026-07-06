@@ -8,6 +8,8 @@ export interface FeedCase {
   clinic: string;
   beforeUri: string;
   afterUri: string;
+  beforeBlurhash?: string;
+  afterBlurhash?: string;
   practiceId?: string;
   practiceSlug?: string;
   location?: string;

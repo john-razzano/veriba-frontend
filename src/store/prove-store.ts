@@ -13,6 +13,7 @@ import {
   getSession,
   listSessionFollowUps,
   listSessions,
+  updateMyPractice,
   login as loginRequest,
   logout as logoutRequest,
   mapFollowUp,
@@ -776,6 +777,12 @@ export const useProveStore = create<ProveStore>((set, get) => ({
           : state.wizard,
       };
     });
+
+    // persist to the public page (fire-and-forget; local state is source of truth)
+    const services = get().practice?.servicesOffered;
+    if (services) {
+      void updateMyPractice({ services }).catch(() => {});
+    }
   },
 
   resetPracticeServices: () => {
@@ -805,6 +812,8 @@ export const useProveStore = create<ProveStore>((set, get) => ({
             }
           : state.wizard,
     }));
+
+    void updateMyPractice({ services: defaultServices }).catch(() => {});
   },
 
   hydrateWizardFromSession: async (sessionId) => {

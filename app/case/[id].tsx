@@ -84,7 +84,13 @@ export default function CaseDetailScreen() {
     <View style={styles.safe}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: spacing.xl }}>
         <View>
-          <BeforeAfterSlider beforeUri={data.beforeUri} afterUri={data.afterUri} height={320} />
+          <BeforeAfterSlider
+            beforeUri={data.beforeUri}
+            afterUri={data.afterUri}
+            beforeBlurhash={data.beforeBlurhash}
+            afterBlurhash={data.afterBlurhash}
+            height={320}
+          />
           <SafeAreaView edges={['top']} style={styles.floatTop} pointerEvents="box-none">
             <Pressable style={styles.floatBack} onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={18} color={colors.white} />

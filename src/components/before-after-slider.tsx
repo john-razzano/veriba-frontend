@@ -15,6 +15,8 @@ import { colors, fonts } from '@/src/theme';
 interface BeforeAfterSliderProps {
   beforeUri: string;
   afterUri: string;
+  beforeBlurhash?: string;
+  afterBlurhash?: string;
   height?: number;
   style?: ViewStyle;
 }
@@ -27,7 +29,14 @@ const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v
  * dev-client rebuild is required. Can be swapped for react-native-gesture-handler
  * + reanimated later for a smoother feel (see docs/REDESIGN-SPEC.md §3).
  */
-export function BeforeAfterSlider({ beforeUri, afterUri, height = 300, style }: BeforeAfterSliderProps) {
+export function BeforeAfterSlider({
+  beforeUri,
+  afterUri,
+  beforeBlurhash,
+  afterBlurhash,
+  height = 300,
+  style,
+}: BeforeAfterSliderProps) {
   const [w, setW] = useState(0);
   const [ratio, setRatio] = useState(0.5);
   const widthRef = useRef(0);
@@ -68,6 +77,8 @@ export function BeforeAfterSlider({ beforeUri, afterUri, height = 300, style }: 
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         transition={200}
+        placeholder={afterBlurhash ? { blurhash: afterBlurhash } : undefined}
+        placeholderContentFit="cover"
       />
 
       <View style={[styles.beforeWrap, { width: ratio * w }]}>
@@ -78,6 +89,8 @@ export function BeforeAfterSlider({ beforeUri, afterUri, height = 300, style }: 
               style={{ width: w, height: '100%' }}
               contentFit="cover"
               transition={200}
+              placeholder={beforeBlurhash ? { blurhash: beforeBlurhash } : undefined}
+              placeholderContentFit="cover"
             />
             {/* mutes the "before" side — same visual language as the feed reveal */}
             <View style={styles.beforeMute} pointerEvents="none" />

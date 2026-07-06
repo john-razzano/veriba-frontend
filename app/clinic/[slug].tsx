@@ -77,6 +77,10 @@ export default function ClinicScreen() {
                 source={{ uri: practice.avatar_url }}
                 style={styles.avatarImg}
                 transition={150}
+                placeholder={
+                  practice.avatar_blurhash ? { blurhash: practice.avatar_blurhash } : undefined
+                }
+                placeholderContentFit="cover"
               />
             ) : (
               <AvatarBadge
@@ -96,6 +100,16 @@ export default function ClinicScreen() {
             </Text>
 
             {practice.bio ? <Text style={styles.bio}>{practice.bio}</Text> : null}
+
+            {practice.services?.length ? (
+              <View style={styles.services}>
+                {practice.services.map((service) => (
+                  <View key={service} style={styles.serviceChip}>
+                    <Text style={styles.serviceText}>{service}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
 
             <View style={styles.actions}>
               <Pressable
@@ -123,6 +137,25 @@ export default function ClinicScreen() {
             </View>
           </View>
 
+          {practice.featured_image_url ? (
+            <>
+              <Text style={styles.gridLabel}>FEATURED</Text>
+              <View style={styles.featuredWrap}>
+                <CaseTile
+                  afterUri={practice.featured_image_url}
+                  treatment={practice.featured_treatment ?? ''}
+                  clinic={practice.name}
+                  onPress={() => {
+                    const match = cases.find(
+                      (c) => c.afterUri === practice.featured_image_url
+                    );
+                    if (match) router.push(`/case/${match.id}` as Href);
+                  }}
+                />
+              </View>
+            </>
+          ) : null}
+
           <Text style={styles.gridLabel}>RESULTS</Text>
           {rows.map((row, i) => (
             <View key={i} style={styles.row}>
@@ -130,6 +163,7 @@ export default function ClinicScreen() {
                 <CaseTile
                   key={c.id}
                   afterUri={c.afterUri}
+                  blurhash={c.afterBlurhash}
                   treatment={c.treatment}
                   clinic={c.category ?? ''}
                   onPress={() => router.push(`/case/${c.id}` as Href)}
@@ -184,6 +218,23 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     marginTop: 7,
   },
+  services: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
+  },
+  serviceChip: {
+    backgroundColor: colors.bgCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  serviceText: { fontFamily: fonts.body.semibold, fontSize: 10.5, color: colors.textMid },
+  featuredWrap: { height: 210, marginHorizontal: 2 },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 14 },
   followBtn: {
     backgroundColor: colors.copper,

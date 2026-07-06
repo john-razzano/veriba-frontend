@@ -2,8 +2,9 @@
 
 State as of July 5, 2026: full two-sided loop is live against the real
 backend — members browse/save/follow/search/approve-with-signature/earn credits/book;
-providers document, request consent, publish, and manage their public page.
-Frontend `e2e4aed` · backend `a7b6072` · DB at migration `0004`.
+providers document, request consent, publish, and manage their public page
+(bio/avatar/booking + featured pin + services, all persisted).
+Backend `ae383e8` · DB at migration `0005`, 56/56 tests.
 Test accounts: member `member2@veriba.app` / `supersecret1` · provider
 `owner+atelier@veriba-demo.studio` / `veriba-demo-2026`.
 
@@ -33,9 +34,14 @@ Test accounts: member `member2@veriba.app` / `supersecret1` · provider
 
 ## Later — provider side & polish
 
-- [ ] **Public page Phase 2 + blurhash**: spec'd July 5 (PRACTICE-PROFILE-SPEC
-  Phase 2, backend `fc67128`) — featured-case pin, persisted services, blurhash
-  placeholders + backfill. Awaiting backend agent; app wiring follows.
+- [x] **Public page Phase 2 + blurhash.** DONE July 5 — backend `ae383e8`
+  (migration `0005`: featured_session_id, services JSON, blurhash columns +
+  backfill of 34 sessions & avatar, 56/56 tests) and app wiring: blurhash
+  placeholders on every image surface (mosaic, search, saved, clinic grid,
+  detail slider, my-results), services chips + FEATURED hero on the public
+  clinic page, services persisted from the provider editor, and a
+  pin/unpin-featured button on the published-session detail. Verified live:
+  pin → alert → public page hero updates; unpin falls back to latest case.
   (Hide/reorder deliberately descoped — unpublish covers removal.)
 - [ ] **Phase 3 — growth layer**: native consult-request messaging (Book consult
   currently opens the clinic's `booking_url`), hours/map (lat/lng columns exist),

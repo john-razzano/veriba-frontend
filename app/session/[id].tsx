@@ -16,6 +16,7 @@ import {
   SectionCard,
   StatusPill,
 } from '@/src/components/ui';
+import { updateMyPractice } from '@/src/lib/veriba-api';
 import { useProveStore } from '@/src/store/prove-store';
 import { colors, fonts, spacing, typography } from '@/src/theme';
 import { OBSCURE_OPTIONS, TREATMENTS, type Session } from '@/src/types';
@@ -438,6 +439,35 @@ export default function SessionDetailScreen() {
               <InfoRow label="URL" value={session.seo.url} />
             </View>
           </SectionCard>
+        ) : null}
+
+        {session.status === 'published' ? (
+          <OutlineButton
+            label={
+              practice?.featuredSessionId === session.id
+                ? 'Unpin featured case'
+                : 'Pin as featured on public page'
+            }
+            onPress={() => {
+              const pinned = practice?.featuredSessionId === session.id;
+              void updateMyPractice({ featured_session_id: pinned ? null : session.id })
+                .then(() => useProveStore.getState().refreshPractice())
+                .then(() => {
+                  Alert.alert(
+                    pinned ? 'Unpinned' : 'Featured',
+                    pinned
+                      ? 'Your public page falls back to your latest case.'
+                      : 'This case now leads your public page.'
+                  );
+                })
+                .catch((error: unknown) => {
+                  Alert.alert(
+                    'Unable to update',
+                    error instanceof Error ? error.message : 'Please try again.'
+                  );
+                });
+            }}
+          />
         ) : null}
 
         {session.status === 'published' ? (
