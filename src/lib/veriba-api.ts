@@ -167,6 +167,12 @@ export type SessionResponseWithStatus = {
   destinations?: PublishDestination[] | null;
 };
 
+export type MemberMatch = {
+  id: string;
+  name?: string | null;
+  initials?: string | null;
+};
+
 export type FollowUpResponse = {
   id?: string | null;
   status?: FollowUpRequestStatus | string | null;
@@ -174,6 +180,8 @@ export type FollowUpResponse = {
   upload_url?: string | null;
   patient_email?: string | null;
   patient_first_name?: string | null;
+  patient_user_id?: string | null;
+  member_match?: MemberMatch | null;
   send_at?: string | null;
   sent_at?: string | null;
   opened_at?: string | null;
@@ -802,6 +810,9 @@ export function mapFollowUp(raw: FollowUpResponse | RawRecord, capturedAt?: stri
       'Patient capture link',
     patientEmail: asString(source.patient_email) ?? '',
     patientFirstName: asString(source.patient_first_name) ?? '',
+    patientUserId: asString(source.patient_user_id),
+    memberMatchName:
+      asString((source.member_match as RawRecord | null | undefined)?.name) ?? null,
     message: asString(source.message) ?? '',
     uploadUrl: normalizeBackendAssetUrl(asString(source.upload_url)),
     uploadToken: asString(source.upload_token),
@@ -1213,6 +1224,14 @@ export async function markConsultHandled(consultId: string) {
   });
 }
 
+/** Exact-match member lookup for followup linking (GROWTH-SPEC §6, practice auth). */
+export async function lookupMember(query: { userId?: string; email?: string }) {
+  const params = new URLSearchParams();
+  if (query.userId) params.set('user_id', query.userId);
+  if (query.email) params.set('email', query.email);
+  return request<{ member: MemberMatch | null }>(`/api/members/lookup?${params.toString()}`);
+}
+
 // --- Push tokens (GROWTH-SPEC §4; delivery dark until APNs is configured) ---
 
 export async function registerPushToken(token: string, platform: 'ios' | 'android') {
@@ -1442,6 +1461,7 @@ export async function createSessionFollowUp(
     patient_first_name: string;
     send_at: string;
     message?: string;
+    patient_user_id?: string | null;
   }
 ) {
   return request<FollowUpResponse>(`/api/sessions/${sessionId}/followup`, {

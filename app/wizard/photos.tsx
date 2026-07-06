@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppInput, ChipButton, SectionCard } from '@/src/components/ui';
+import { MemberScanModal } from '@/src/components/member-scan';
 import {
   PhotoSlot,
   ProgressionCarouselCard,
   type ProgressionCarouselItem,
 } from '@/src/components/photo-preview';
 import { WizardScreen } from '@/src/components/wizard-screen';
+import { lookupMember } from '@/src/lib/veriba-api';
 import { useProveStore } from '@/src/store/prove-store';
 import { colors, fonts, radii, spacing, typography } from '@/src/theme';
 import { FOLLOW_UP_METHODS, FOLLOW_UP_TIMINGS } from '@/src/types';
@@ -30,6 +32,29 @@ export default function PhotosStepScreen() {
   const setWizardPatientInitials = useProveStore((state) => state.setWizardPatientInitials);
   const setWizardFollowUpRequest = useProveStore((state) => state.setWizardFollowUpRequest);
   const [loadingSlot, setLoadingSlot] = useState<'baseline' | 'after' | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
+
+  // Email → member match (badge only; a QR-scanned binding always wins).
+  const patientEmail = wizard.followUpRequest.patientEmail;
+  const scannedRef = wizard.followUpRequest.patientUserId;
+  useEffect(() => {
+    const email = patientEmail.trim().toLowerCase();
+    if (!email.includes('@') || email.length < 5) return;
+    const timer = setTimeout(() => {
+      lookupMember({ email })
+        .then((res) => {
+          const current = useProveStore.getState().wizard.followUpRequest;
+          // Don't clobber a QR-scanned link with an email lookup.
+          if (current.patientUserId && current.patientUserId !== res.member?.id) return;
+          setWizardFollowUpRequest({
+            patientUserId: res.member?.id ?? null,
+            memberMatchName: res.member?.name ?? null,
+          });
+        })
+        .catch(() => {});
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [patientEmail, scannedRef, setWizardFollowUpRequest]);
 
   useEffect(() => {
     setWizardStep(2);
@@ -274,6 +299,34 @@ export default function PhotosStepScreen() {
                     autoCapitalize="none"
                     keyboardType="email-address"
                   />
+
+                  {wizard.followUpRequest.patientUserId ? (
+                    <View style={styles.memberBadge}>
+                      <Ionicons name="checkmark-circle" size={15} color={colors.success} />
+                      <Text style={styles.memberBadgeText}>
+                        {wizard.followUpRequest.memberMatchName
+                          ? `${wizard.followUpRequest.memberMatchName} — Veriba member`
+                          : 'Member code linked'}
+                        {' · they’ll get an app notification'}
+                      </Text>
+                      <Pressable
+                        onPress={() =>
+                          setWizardFollowUpRequest({
+                            patientUserId: null,
+                            memberMatchName: null,
+                          })
+                        }>
+                        <Text style={styles.memberUnlink}>Unlink</Text>
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <Pressable style={styles.scanBtn} onPress={() => setScanOpen(true)}>
+                      <Ionicons name="qr-code-outline" size={15} color={colors.text} />
+                      <Text style={styles.scanBtnText}>
+                        Scan the patient's member code
+                      </Text>
+                    </Pressable>
+                  )}
                   <AppInput
                     value={wizard.followUpRequest.message}
                     onChangeText={(value) => setWizardFollowUpRequest({ message: value })}
@@ -335,6 +388,19 @@ export default function PhotosStepScreen() {
         autoCapitalize="characters"
         maxLength={5}
         placeholder="Enter initials"
+      />
+      <MemberScanModal
+        visible={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onLinked={(member) =>
+          setWizardFollowUpRequest({
+            patientUserId: member.id,
+            memberMatchName: member.name ?? null,
+            patientFirstName:
+              wizard.followUpRequest.patientFirstName ||
+              (member.name ? member.name.split(' ')[0] : ''),
+          })
+        }
       />
     </WizardScreen>
   );
@@ -478,6 +544,44 @@ const styles = StyleSheet.create({
   },
   timingChip: {
     width: '100%',
+  },
+  memberBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: colors.successBg,
+    borderWidth: 1,
+    borderColor: '#D6E8DD',
+    borderRadius: radii.lg,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  memberBadgeText: {
+    ...typography.bodyXs,
+    color: colors.success,
+    flex: 1,
+    fontFamily: fonts.body.semibold,
+  },
+  memberUnlink: {
+    ...typography.bodyXs,
+    color: colors.textMid,
+    textDecorationLine: 'underline',
+  },
+  scanBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgCard,
+    borderRadius: radii.lg,
+    paddingVertical: 10,
+  },
+  scanBtnText: {
+    fontFamily: fonts.body.semibold,
+    fontSize: 12,
+    color: colors.text,
   },
   formStack: {
     gap: spacing.sm,

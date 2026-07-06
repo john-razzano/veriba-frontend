@@ -126,6 +126,9 @@ export interface FollowUpRequest {
   patientDestination: string;
   patientEmail: string;
   patientFirstName: string;
+  /** Bound member account (QR scan or email match) — deterministic push target. */
+  patientUserId: string | null;
+  memberMatchName: string | null;
   message: string;
   uploadUrl: string | null;
   uploadToken: string | null;

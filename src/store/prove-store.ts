@@ -199,6 +199,8 @@ function createDraftFollowUpRequest(): FollowUpRequest {
     patientDestination: 'Patient email or SMS',
     patientEmail: '',
     patientFirstName: '',
+    patientUserId: null,
+    memberMatchName: null,
     message: '',
     uploadUrl: null,
     uploadToken: null,
@@ -1160,6 +1162,7 @@ export const useProveStore = create<ProveStore>((set, get) => ({
         const rawFollowUp = await createSessionFollowUp(sessionId, {
           patient_email: wizard.followUpRequest.patientEmail.trim(),
           patient_first_name: wizard.followUpRequest.patientFirstName.trim(),
+          patient_user_id: wizard.followUpRequest.patientUserId ?? undefined,
           send_at: wizard.followUpRequest.sendImmediately
             ? new Date().toISOString()
             : getFollowUpScheduledFor(

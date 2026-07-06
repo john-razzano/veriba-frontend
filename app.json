@@ -56,7 +56,13 @@
       ],
       "expo-secure-store",
       "expo-image",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Veriba uses your camera to scan a patient\u2019s member code and capture treatment photos."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

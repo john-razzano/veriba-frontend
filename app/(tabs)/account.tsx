@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 
 import {
   AvatarBadge,
@@ -77,6 +78,28 @@ function MemberAccount() {
           ))}
         </View>
       </SectionCard>
+
+      {user?.id ? (
+        <SectionCard>
+          <View style={styles.qrRow}>
+            <View style={styles.qrCopy}>
+              <Text style={styles.qrTitle}>My clinic code</Text>
+              <Text style={styles.qrText}>
+                Show this at your clinic — they scan it to link your treatment to your
+                Veriba account, so updates reach this phone.
+              </Text>
+            </View>
+            <View style={styles.qrBox}>
+              <QRCode
+                value={`veriba:member:${user.id}`}
+                size={92}
+                color={colors.text}
+                backgroundColor="transparent"
+              />
+            </View>
+          </View>
+        </SectionCard>
+      ) : null}
 
       <SectionCard style={styles.menuCard}>
         {MEMBER_MENU.map(([icon, label], index) => (
@@ -437,6 +460,29 @@ const styles = StyleSheet.create({
   },
   fullWidthChip: {
     width: '100%',
+  },
+  qrRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  qrCopy: { flex: 1, gap: 5 },
+  qrTitle: {
+    fontFamily: fonts.body.semibold,
+    fontSize: 13,
+    color: colors.text,
+  },
+  qrText: {
+    ...typography.bodyXs,
+    color: colors.textMid,
+    lineHeight: 16,
+  },
+  qrBox: {
+    padding: 8,
+    borderRadius: radii.lg,
+    backgroundColor: colors.bgCard,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
   footerMeta: {
     alignItems: 'center',
