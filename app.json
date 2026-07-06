@@ -55,10 +55,18 @@
         }
       ],
       "expo-secure-store",
-      "expo-image"
+      "expo-image",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "54aeeef0-9696-46b7-a67b-ba8e6a31d70c"
+      }
+    },
+    "owner": "jrazzano"
   }
 }
