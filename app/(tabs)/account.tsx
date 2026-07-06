@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -138,15 +137,6 @@ function ProviderAccount() {
     }
   }, [bootstrap, practice, user]);
 
-  const widgetSnippet = practice?.widgetSlug
-    ? `<script src="https://prove.agence.studio/widget/${practice.widgetSlug}.js"></script>`
-    : '<script src="https://prove.agence.studio/widget/your-practice.js"></script>';
-
-  const copySnippet = async () => {
-    await Clipboard.setStringAsync(widgetSnippet);
-    Alert.alert('Copied', 'Widget snippet copied to the clipboard.');
-  };
-
   const handleToggleService = (treatment: string) => {
     if (
       practice?.servicesOffered.includes(treatment) &&
@@ -254,17 +244,6 @@ function ProviderAccount() {
             );
           })}
         </View>
-      </SectionCard>
-
-      <SectionCard>
-        <Text style={styles.sectionTitle}>Website Widget</Text>
-        <Text style={styles.helper}>
-          Add this snippet to any page to display your verified gallery.
-        </Text>
-        <View style={styles.codeCard}>
-          <Text style={styles.codeText}>{widgetSnippet}</Text>
-        </View>
-        <OutlineButton label="Copy Snippet" onPress={copySnippet} />
       </SectionCard>
 
       <View style={styles.footerMeta}>
@@ -458,17 +437,6 @@ const styles = StyleSheet.create({
   },
   fullWidthChip: {
     width: '100%',
-  },
-  codeCard: {
-    borderRadius: radii.lg,
-    backgroundColor: colors.bgInput,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-  },
-  codeText: {
-    fontFamily: fonts.body.regular,
-    fontSize: 12,
-    color: colors.textMid,
   },
   footerMeta: {
     alignItems: 'center',
