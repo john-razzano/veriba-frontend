@@ -34,6 +34,17 @@ by backend e2e side effects — again; see Housekeeping) · provider
 
 ## Later — provider side & polish
 
+- [x] **Member QR + scan-linked followups.** DONE July 6 (backend `57c5c3f`,
+  migration `0007`, 87/87 tests; frontend `b4b57e7`). Members show a "My
+  clinic code" QR on Account; providers scan it in the wizard's patient-link
+  form (expo-camera) or get an automatic match when typing a member's email —
+  green badge with the member's name. `patient_user_id` beats email matching
+  everywhere (approvals/results/push), and the member push moved from
+  followup creation to **send time** with state-aware copy. Verified live:
+  QR-bound followup with a deliberately wrong email still resolved to Mia and
+  delivered "Time to add your after photo" to John's phone. (John: device
+  needs one Xcode rebuild for the camera scanner.)
+
 - [x] **Public page Phase 2 + blurhash.** DONE July 5 — backend `ae383e8`
   (migration `0005`: featured_session_id, services JSON, blurhash columns +
   backfill of 34 sessions & avatar, 56/56 tests) and app wiring: blurhash
