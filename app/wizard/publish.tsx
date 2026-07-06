@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
@@ -12,7 +13,7 @@ import { WizardScreen } from '@/src/components/wizard-screen';
 import { buildSeoPreview } from '@/src/lib/veriba-api';
 import { useProveStore } from '@/src/store/prove-store';
 import { colors, fonts, radii, spacing, typography } from '@/src/theme';
-import type { SessionStatus } from '@/src/types';
+import type { SessionStatus, WizardState } from '@/src/types';
 import {
   followUpMethodLabel,
   followUpTimingLabel,
@@ -32,6 +33,7 @@ export default function PublishStepScreen() {
     mode: SessionStatus;
     previewUri: string | null;
     treatment: string | null;
+    followUp: WizardState['followUpRequest'] | null;
   } | null>(null);
 
   useEffect(() => {
@@ -75,9 +77,11 @@ export default function PublishStepScreen() {
           </Text>
         </View>
 
-        {result.mode === 'published' && result.previewUri ? (
+        {result.previewUri ? (
           <View style={styles.previewBlock}>
-            <Text style={styles.previewLabel}>HOW IT APPEARS TO MEMBERS</Text>
+            <Text style={styles.previewLabel}>
+              {result.mode === 'published' ? 'HOW IT APPEARS TO MEMBERS' : 'BASELINE ON FILE'}
+            </Text>
             <View style={styles.previewTile}>
               <CaseTile
                 afterUri={result.previewUri}
@@ -86,6 +90,36 @@ export default function PublishStepScreen() {
                 onPress={() => router.replace(`/session/${result.id}`)}
               />
             </View>
+          </View>
+        ) : null}
+
+        {result.mode === 'pending_after' ? (
+          <View style={styles.nextSteps}>
+            <Text style={styles.previewLabel}>WHAT HAPPENS NEXT</Text>
+            <NextStep
+              icon={
+                result.followUp?.method === 'patient_link'
+                  ? 'mail-outline'
+                  : result.followUp?.method === 'follow_up_visit'
+                    ? 'calendar-outline'
+                    : 'image-outline'
+              }
+              text={
+                result.followUp?.method === 'patient_link'
+                  ? `${followUpMethodLabel(result.followUp.method)} · ${followUpTimingLabel(result.followUp.timing)}`
+                  : result.followUp?.method === 'follow_up_visit'
+                    ? `Capture the after photo at the follow-up visit · ${followUpTimingLabel(result.followUp.timing)}`
+                    : 'No follow-up scheduled — add the after photo from the entry anytime.'
+              }
+            />
+            <NextStep
+              icon="time-outline"
+              text="Until then it sits under PENDING on your Home screen and in Activity."
+            />
+            <NextStep
+              icon="shield-checkmark-outline"
+              text="Once the after photo lands, you'll request patient consent and publish from the entry."
+            />
           </View>
         ) : null}
 
@@ -160,6 +194,7 @@ export default function PublishStepScreen() {
         ...sessionResult,
         previewUri: afterPhoto?.uri ?? beforePhoto?.uri ?? null,
         treatment: wizard.treatment,
+        followUp: wizard.followUpRequest,
       });
       resetWizard();
     } catch (error) {
@@ -242,6 +277,21 @@ export default function PublishStepScreen() {
   );
 }
 
+function NextStep({
+  icon,
+  text,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  text: string;
+}) {
+  return (
+    <View style={styles.nextStepRow}>
+      <Ionicons name={icon} size={15} color={colors.copper} />
+      <Text style={styles.nextStepText}>{text}</Text>
+    </View>
+  );
+}
+
 function MetaCard({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.metaCard}>
@@ -297,6 +347,26 @@ const styles = StyleSheet.create({
   previewBlock: {
     marginBottom: spacing.lg,
     gap: spacing.sm,
+  },
+  nextSteps: {
+    borderRadius: radii.lg,
+    backgroundColor: colors.bgCard,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    padding: spacing.md,
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  nextStepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 9,
+  },
+  nextStepText: {
+    ...typography.bodySm,
+    color: colors.textMid,
+    flex: 1,
+    lineHeight: 19,
   },
   previewLabel: {
     ...typography.label,
