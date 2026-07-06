@@ -62,6 +62,7 @@ export default function ClinicScreen() {
   const [cases, setCases] = useState<FeedCase[]>([]);
   const [failed, setFailed] = useState(false);
   const [following, setFollowing] = useState(false);
+  const [treatmentFilter, setTreatmentFilter] = useState<string | null>(null);
   const isMember = useProveStore((state) => state.user?.role === 'member');
 
   useEffect(() => {
@@ -83,9 +84,21 @@ export default function ClinicScreen() {
 
   const website = practice?.website?.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
+  // Procedure filter: chips derived from this clinic's actual cases, most common first.
+  const treatmentCounts = new Map<string, number>();
+  for (const c of cases) {
+    treatmentCounts.set(c.treatment, (treatmentCounts.get(c.treatment) ?? 0) + 1);
+  }
+  const treatments = [...treatmentCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([treatment]) => treatment);
+  const visibleCases = treatmentFilter
+    ? cases.filter((c) => c.treatment === treatmentFilter)
+    : cases;
+
   const rows: FeedCase[][] = [];
-  for (let i = 0; i < cases.length; i += 2) {
-    rows.push(cases.slice(i, i + 2));
+  for (let i = 0; i < visibleCases.length; i += 2) {
+    rows.push(visibleCases.slice(i, i + 2));
   }
 
   return (
@@ -210,7 +223,7 @@ export default function ClinicScreen() {
             ) : null}
           </View>
 
-          {practice.featured_image_url ? (
+          {practice.featured_image_url && !treatmentFilter ? (
             <>
               <Text style={styles.gridLabel}>FEATURED</Text>
               <View style={styles.featuredWrap}>
@@ -230,6 +243,34 @@ export default function ClinicScreen() {
           ) : null}
 
           <Text style={styles.gridLabel}>RESULTS</Text>
+          {treatments.length > 1 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterRow}>
+              <Pressable
+                style={[styles.filterChip, !treatmentFilter && styles.filterChipActive]}
+                onPress={() => setTreatmentFilter(null)}>
+                <Text
+                  style={[styles.filterText, !treatmentFilter && styles.filterTextActive]}>
+                  All
+                </Text>
+              </Pressable>
+              {treatments.map((treatment) => {
+                const active = treatmentFilter === treatment;
+                return (
+                  <Pressable
+                    key={treatment}
+                    style={[styles.filterChip, active && styles.filterChipActive]}
+                    onPress={() => setTreatmentFilter(active ? null : treatment)}>
+                    <Text style={[styles.filterText, active && styles.filterTextActive]}>
+                      {treatment} · {treatmentCounts.get(treatment)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          ) : null}
           {rows.map((row, i) => (
             <View key={i} style={styles.row}>
               {row.map((c) => (
@@ -356,6 +397,25 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   siteText: { fontFamily: fonts.body.semibold, fontSize: 11, color: colors.text },
+  filterRow: {
+    gap: 6,
+    paddingHorizontal: spacing.md,
+    paddingBottom: 10,
+  },
+  filterChip: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgCard,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  filterChipActive: {
+    backgroundColor: colors.text,
+    borderColor: colors.text,
+  },
+  filterText: { fontFamily: fonts.body.semibold, fontSize: 11, color: colors.textMid },
+  filterTextActive: { color: colors.white },
   gridLabel: {
     ...typography.label,
     color: colors.textLight,
