@@ -2,38 +2,37 @@ import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
+import { CaseTile } from '@/src/components/case-tile';
 import {
   ProgressionCarouselCard,
   type ProgressionCarouselItem,
 } from '@/src/components/photo-preview';
-import { ChipButton, OutlineButton, SectionCard } from '@/src/components/ui';
+import { OutlineButton, SectionCard } from '@/src/components/ui';
 import { WizardScreen } from '@/src/components/wizard-screen';
 import { buildSeoPreview } from '@/src/lib/veriba-api';
 import { useProveStore } from '@/src/store/prove-store';
 import { colors, fonts, radii, spacing, typography } from '@/src/theme';
-import type { PublishDestination, SessionStatus } from '@/src/types';
+import type { SessionStatus } from '@/src/types';
 import {
   followUpMethodLabel,
   followUpTimingLabel,
   formatCompactDate,
 } from '@/src/utils/format';
 
-const destinationLabels: Record<PublishDestination, string> = {
-  widget: 'Practice Website Carousel',
-  gallery: 'Veriba Gallery',
-  gbp: 'Google Business Profile',
-};
-
 export default function PublishStepScreen() {
   const router = useRouter();
   const practice = useProveStore((state) => state.practice);
   const wizard = useProveStore((state) => state.wizard);
   const setWizardStep = useProveStore((state) => state.setWizardStep);
-  const toggleWizardDestination = useProveStore((state) => state.toggleWizardDestination);
   const publishWizardSession = useProveStore((state) => state.publishWizardSession);
   const resetWizard = useProveStore((state) => state.resetWizard);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ id: string; mode: SessionStatus } | null>(null);
+  const [result, setResult] = useState<{
+    id: string;
+    mode: SessionStatus;
+    previewUri: string | null;
+    treatment: string | null;
+  } | null>(null);
 
   useEffect(() => {
     setWizardStep(4);
@@ -58,26 +57,38 @@ export default function PublishStepScreen() {
 
   if (result) {
     return (
-      <WizardScreen
-        step={4}
-        continueLabel="Done — Back to Home"
-        onContinue={() => router.replace('/')}>
+      <WizardScreen step={4} continueLabel="Done" onContinue={() => router.replace('/')}>
         <View style={styles.successCard}>
           <Text style={styles.successTitle}>
             {result.mode === 'published'
-              ? 'Published & Optimized'
+              ? 'Published'
               : result.mode === 'declined'
                 ? 'Consent Declined'
                 : 'Pending Entry Saved'}
           </Text>
           <Text style={styles.successText}>
             {result.mode === 'published'
-              ? 'The session is live. SEO metadata has been generated.'
+              ? 'This case is now live in Veriba discovery and on your public page.'
               : result.mode === 'declined'
                 ? 'The session was saved in a declined state and will not be published.'
                 : 'The session was saved as pending. Return when the after photo is ready.'}
           </Text>
         </View>
+
+        {result.mode === 'published' && result.previewUri ? (
+          <View style={styles.previewBlock}>
+            <Text style={styles.previewLabel}>HOW IT APPEARS TO MEMBERS</Text>
+            <View style={styles.previewTile}>
+              <CaseTile
+                afterUri={result.previewUri}
+                treatment={result.treatment ?? ''}
+                clinic={practice?.name ?? ''}
+                onPress={() => router.replace(`/session/${result.id}`)}
+              />
+            </View>
+          </View>
+        ) : null}
+
         <OutlineButton
           label="View Entry Detail"
           onPress={() => router.replace(`/session/${result.id}`)}
@@ -144,7 +155,12 @@ export default function PublishStepScreen() {
         return;
       }
 
-      setResult(sessionResult);
+      // Snapshot the preview before resetWizard clears the local photos.
+      setResult({
+        ...sessionResult,
+        previewUri: afterPhoto?.uri ?? beforePhoto?.uri ?? null,
+        treatment: wizard.treatment,
+      });
       resetWizard();
     } catch (error) {
       Alert.alert(
@@ -222,25 +238,6 @@ export default function PublishStepScreen() {
         </SectionCard>
       ) : null}
 
-      {progressionReady && wizard.consentTier !== 'decline' ? (
-        <SectionCard>
-          <Text style={styles.sectionTitle}>Publish Destinations</Text>
-          <View style={styles.destinations}>
-            {(['widget', 'gallery', 'gbp'] as PublishDestination[]).map((destination) => (
-              <ChipButton
-                key={destination}
-                label={destinationLabels[destination]}
-                sublabel={
-                  wizard.publishDestinations.includes(destination) ? 'Enabled' : 'Disabled'
-                }
-                active={wizard.publishDestinations.includes(destination)}
-                onPress={() => toggleWizardDestination(destination)}
-                style={styles.destinationChip}
-              />
-            ))}
-          </View>
-        </SectionCard>
-      ) : null}
     </WizardScreen>
   );
 }
@@ -297,11 +294,18 @@ const styles = StyleSheet.create({
     ...typography.bodySm,
     color: colors.text,
   },
-  destinations: {
+  previewBlock: {
+    marginBottom: spacing.lg,
     gap: spacing.sm,
   },
-  destinationChip: {
-    width: '100%',
+  previewLabel: {
+    ...typography.label,
+    color: colors.textLight,
+  },
+  previewTile: {
+    height: 220,
+    borderRadius: radii.lg,
+    overflow: 'hidden',
   },
   successCard: {
     borderRadius: radii.xl,

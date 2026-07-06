@@ -51,6 +51,7 @@ export default function ApprovalScreen() {
   const [approval, setApproval] = useState(id ? getApproval(id) : undefined);
   const [decision, setDecision] = useState<ConsentDecision>('full');
   const [signature, setSignature] = useState<string | null>(null);
+  const [signing, setSigning] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -103,7 +104,10 @@ export default function ApprovalScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={!signing}
+        contentContainerStyle={styles.content}>
         <View style={styles.headRow}>
           <Pressable style={styles.backCircle} onPress={() => router.back()}>
             <Ionicons name="chevron-back" size={18} color={colors.text} />
@@ -157,7 +161,7 @@ export default function ApprovalScreen() {
           <View style={styles.sigBlock}>
             <Text style={styles.sigLabel}>SIGN TO CONFIRM</Text>
             <View style={styles.sigCard}>
-              <SignaturePad onChange={setSignature} />
+              <SignaturePad onChange={setSignature} onInteractionChange={setSigning} />
             </View>
           </View>
         ) : null}

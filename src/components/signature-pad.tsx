@@ -61,7 +61,13 @@ export function SignaturePad({ onChange, onReady, onInteractionChange }: Signatu
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponderCapture: () => true,
         onMoveShouldSetPanResponder: () => true,
+        onMoveShouldSetPanResponderCapture: () => true,
+        // Never yield strokes to parent scroll views or the navigator's
+        // swipe-back — same fix as the before/after slider.
+        onPanResponderTerminationRequest: () => false,
+        onShouldBlockNativeResponder: () => true,
         onPanResponderGrant: (event) => {
           interactionRef.current?.(true);
           const point = {
