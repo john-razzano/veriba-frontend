@@ -223,7 +223,7 @@ export default function ClinicScreen() {
             ) : null}
           </View>
 
-          {practice.featured_image_url && !treatmentFilter ? (
+          {practice.featured_image_url ? (
             <>
               <Text style={styles.gridLabel}>FEATURED</Text>
               <View style={styles.featuredWrap}>
