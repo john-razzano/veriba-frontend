@@ -13,6 +13,7 @@ import {
   getSession,
   listSessionFollowUps,
   listSessions,
+  oauthLogin,
   updateMyPractice,
 } from '@/src/lib/veriba-api';
 import {
@@ -98,6 +99,11 @@ interface ProveStore {
   sessions: Session[];
   wizard: WizardState;
   login: (payload: LoginPayload) => Promise<void>;
+  loginWithOAuth: (
+    provider: 'google' | 'apple',
+    idToken: string,
+    fullName?: string | null
+  ) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   restoreSession: () => Promise<void>;
@@ -373,7 +379,10 @@ function isUnauthorizedError(error: unknown) {
   return error instanceof VeribaApiError && error.status === 401;
 }
 
-function reportBootstrapFailure(context: 'login' | 'register' | 'restore', error: unknown) {
+function reportBootstrapFailure(
+  context: 'login' | 'register' | 'restore' | 'oauth-login',
+  error: unknown
+) {
   console.error(`[store] bootstrap failed after ${context}:`, error);
 }
 
@@ -455,6 +464,58 @@ export const useProveStore = create<ProveStore>((set, get) => ({
       .bootstrap()
       .catch((error) => {
         reportBootstrapFailure('login', error);
+        if (!isUnauthorizedError(error)) {
+          set({
+            authError: toErrorMessage(error),
+          });
+        }
+      });
+  },
+
+  loginWithOAuth: async (provider, idToken, fullName) => {
+    set({
+      isAuthenticating: true,
+      authError: null,
+    });
+
+    try {
+      const response = await oauthLogin({
+        provider,
+        id_token: idToken,
+        full_name: fullName ?? undefined,
+      });
+
+      await saveTokens({
+        accessToken: response.access_token,
+        refreshToken: response.refresh_token,
+        tokenType: response.token_type,
+      });
+
+      set({
+        accessToken: response.access_token,
+        refreshToken: response.refresh_token,
+        tokenType: response.token_type,
+        authProvider: provider,
+        user: mapUser(response.user, provider),
+        isAuthenticated: true,
+      });
+    } catch (error) {
+      console.error('[store.oauth] failed', error);
+      set({
+        ...createLoggedOutState(get().practice),
+        authError: toErrorMessage(error),
+      });
+      throw error;
+    } finally {
+      set({
+        isAuthenticating: false,
+      });
+    }
+
+    void get()
+      .bootstrap()
+      .catch((error) => {
+        reportBootstrapFailure('oauth-login', error);
         if (!isUnauthorizedError(error)) {
           set({
             authError: toErrorMessage(error),

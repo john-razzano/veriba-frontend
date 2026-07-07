@@ -1262,6 +1262,24 @@ export async function respondToApproval(
   });
 }
 
+/** Native OAuth: the app hands us the provider's identity token (OAUTH-SPEC). */
+export async function oauthLogin(payload: {
+  provider: 'google' | 'apple';
+  id_token: string;
+  full_name?: string | null;
+}) {
+  return request<{
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+    user: AuthUserResponse;
+  }>('/api/auth/oauth', {
+    method: 'POST',
+    body: payload,
+    auth: false,
+  });
+}
+
 export async function login(payload: { email: string; password: string }) {
   return request<{
     access_token: string;

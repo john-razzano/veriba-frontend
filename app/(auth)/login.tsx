@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { OAuthButtons } from '@/src/components/oauth-buttons';
 import { AppInput, GradientButton, OutlineButton } from '@/src/components/ui';
 import { getApiBaseUrl } from '@/src/lib/veriba-api';
 import { useProveStore } from '@/src/store/prove-store';
@@ -185,6 +186,10 @@ export default function LoginScreen() {
             label={mode === 'login' ? 'Need an account?' : 'Already have an account?'}
             onPress={() => setMode(mode === 'login' ? 'register' : 'login')}
           />
+
+          {mode === 'login' || role === 'member' ? (
+            <OAuthButtons onSignedIn={() => router.replace('/(tabs)')} />
+          ) : null}
         </View>
 
         <View style={styles.metaBlock}>

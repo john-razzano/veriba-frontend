@@ -62,7 +62,8 @@
         {
           "cameraPermission": "Veriba uses your camera to scan a patient\u2019s member code and capture treatment photos."
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true
@@ -71,7 +72,8 @@
       "router": {},
       "eas": {
         "projectId": "54aeeef0-9696-46b7-a67b-ba8e6a31d70c"
-      }
+      },
+      "googleIosClientId": ""
     },
     "owner": "jrazzano"
   }
