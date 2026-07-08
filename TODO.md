@@ -10,15 +10,18 @@ by backend e2e side effects — again; see Housekeeping) · provider
 
 ## Now — correctness & security
 
-- [ ] **OAuth (Apple + Google)** — built July 7, awaiting John's live sign-in
-  tests. Backend `f5975a2` (migration `0008`, 98/98 tests): `POST
-  /api/auth/oauth` verifies provider JWTs against JWKS, links by subject →
-  verified email → creates member. Frontend: native Apple/Google buttons on
-  the auth screen (hidden for clinic signup), Google client ID from Firebase
-  project `veriba-4acaa`, dev client rebuilt with both modules. Verified: the
-  Google consent sheet opens in-simulator. Remaining: John completes a Google
-  sign-in (simulator ok) and an Apple sign-in on his iPhone (needs one Xcode
-  rebuild; test "Hide My Email" for the private-relay path).
+- [x] **OAuth (Apple + Google).** DONE July 8 — verified end-to-end. Backend
+  `f5975a2` (migration `0008`): `POST /api/auth/oauth` verifies provider JWTs
+  against JWKS, resolves by subject → verified-email link → create-member.
+  Frontend: native Apple/Google buttons (hidden for clinic signup), Google
+  client ID from Firebase `veriba-4acaa`. Verified live: Google sign-in creates
+  a member; Apple sign-in with **Hide My Email** creates a `@privaterelay`
+  member and a followup push delivered to that account (targeted by
+  `patient_user_id` from the QR, not email). Debugging flushed out + fixed two
+  real bugs: push-token registration raced itself into a 409 (frontend dedup
+  `cdff78c` + backend race-safe upsert `0f08346`), and the initial `aud`
+  mismatch (backend config). See the Resend item for the Apple email-source
+  step hidden-email members will need.
 
 - [ ] **Stable API hostname.** The quick trycloudflare URL rotates whenever the tunnel
   restarts, breaking `EXPO_PUBLIC_VERIBA_API_BASE_URL` and all stored image URLs.
