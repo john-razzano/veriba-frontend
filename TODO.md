@@ -26,6 +26,13 @@ by backend e2e side effects — again; see Housekeeping) · provider
   John's Cloudflare account.)*
 - [ ] **Configure Resend** so follow-up emails actually send — the emailed web link is
   the approval path for patients without the app. *(Needs John's Resend API key.)*
+  **Also required when doing this:** register the Resend sending domain + sender
+  address with Apple as a "Sign in with Apple" email source (Apple Developer →
+  Certificates, Identifiers & Profiles → Configure Sign in with Apple for Email
+  Communication). Without it, Apple's private relay **silently drops** every
+  follow-up email to Hide-My-Email members (their account email is a
+  `@privaterelay.appleid.com` address). Push is unaffected — it targets the
+  account id via the QR scan, verified working July 8 against a real relay account.
 - [ ] **Blur tooling for `full_blur` consent.** Publishing is safely gated (see Done),
   but there's still no way to actually obscure pixels post-consent — providers need
   an obscuration step (the wizard's editor applies it pre-upload only) before a
