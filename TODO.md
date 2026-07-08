@@ -1,12 +1,13 @@
 # Veriba — working TODO
 
-State as of July 6, 2026: full two-sided loop is live against the real
-backend, now including the Phase 3 growth layer — consult requests, hours,
-multi-photo cases, analytics counts, push plumbing (delivery pending APNs).
-Backend `a99a434` · DB at migration `0006`, 74/74 tests.
-Test accounts: member `member3@veriba.app` / `supersecret1` (member2 was wiped
-by backend e2e side effects — again; see Housekeeping) · provider
-`owner+atelier@veriba-demo.studio` / `veriba-demo-2026`.
+State as of July 8, 2026: full two-sided loop live against the real backend,
+Phase 3 growth layer complete, push delivery working on device, and
+Apple + Google OAuth verified end-to-end (incl. Hide My Email).
+Backend `0f08346` · DB at migration `0008`.
+Test accounts: member `member3@veriba.app` / `supersecret1` · provider
+`owner+atelier@veriba-demo.studio` / `veriba-demo-2026`. (John also has two
+personal member accounts from OAuth testing — Google `johnrano@gmail.com` and
+an Apple `@privaterelay.appleid.com` relay; see Follow-ups → account linking.)
 
 ## Now — correctness & security
 
@@ -40,6 +41,54 @@ by backend e2e side effects — again; see Housekeeping) · provider
   but there's still no way to actually obscure pixels post-consent — providers need
   an obscuration step (the wizard's editor applies it pre-upload only) before a
   blur-consented case can go live. Longer-term: private bucket + signed URLs.
+
+## Follow-ups & known issues (open, non-blocking)
+
+Captured July 8 — things surfaced during OAuth/push debugging and earlier work
+that aren't broken enough to block but shouldn't be forgotten.
+
+- [ ] **Bootstrap runs twice on startup.** Every launch fires two concurrent
+  `GET /api/users/me` (and used to fire two push-token registrations — that
+  race is now guarded in `src/lib/push.ts`, but the double-bootstrap itself is
+  still there). Wasteful and a latent source of races. Find why `bootstrap()`
+  is invoked twice (root `_layout` restore + a screen mount effect, or React
+  strict-mode double-invoke) and dedupe at the source.
+- [ ] **`currentToken` optimism can mask a lost push token.** `push.ts` skips
+  re-registration when the token equals the cached `currentToken`. If the
+  backend ever loses the token row (as happened during the 409 race), the app
+  won't re-register until a full cold restart. Consider registering on every
+  bootstrap regardless — the backend upsert is idempotent/race-safe now, so
+  it's cheap.
+- [ ] **Account linking across sign-in methods.** One person can end up with
+  separate accounts per method (email vs Google vs Apple-relay) — John already
+  has two. If we want to treat them as one identity, design a linking flow
+  (verified-email merge, or "connect another sign-in" in settings). Not needed
+  yet; note it before real users accumulate duplicates.
+- [ ] **Provider account with no practice hard-fails bootstrap.** If OAuth
+  email-links to a provider whose practice was deleted (the orphaned-owner
+  case), the app takes the provider path and 403s on `/api/practices/me` with
+  no graceful state. Shouldn't happen in normal prod (providers always create a
+  practice at registration), but add a guard/empty-state if we ever allow
+  practice-less providers.
+- [ ] **Provider UI to add progress photos.** Backend `photos[]` endpoints
+  exist (migration 0006) and the case-detail thumbnail strip renders them, but
+  only the seed populates them — there's no wizard step for a provider to
+  attach mid-treatment/angle photos. Add it when multi-photo becomes a real
+  workflow.
+- [ ] **`SafeAreaView` deprecation warning.** A screen still imports
+  `SafeAreaView` from `react-native` instead of `react-native-safe-area-context`
+  (warning in Metro logs). Grep and swap; trivial.
+- [ ] **Android push / FCM.** When Android ships, Expo push needs an FCM
+  server key — the Firebase project `veriba-4acaa` already exists (created for
+  the Google OAuth client), so it's a config step, not new infra.
+- [ ] **Stale image hosts on tunnel rotation.** Stored image URLs embed the
+  tunnel host, so a rotation breaks them until the backend's
+  `PUBLIC_STORAGE_BASE_URL` is updated; the app masks it client-side for now.
+  The named-tunnel item above makes this permanent-fix.
+- [ ] **Test-data cleanup (backend).** Debugging left several test followups on
+  Atelier sessions (`7576ef8b`, `282718af`, `49d73f5f`, `afb3fdce`, and the
+  Botox–Crow's-Feet session's followups) and the two John personal member
+  accounts. Have the backend agent clear the stray followups when convenient.
 
 ## Next — consumer surface
 
