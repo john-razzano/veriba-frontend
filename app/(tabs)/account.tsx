@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import {
@@ -37,6 +37,7 @@ function MemberAccount() {
   const user = useProveStore((state) => state.user);
   const logout = useProveStore((state) => state.logout);
   const [counts, setCounts] = useState({ results: 0, saved: 0, following: 0 });
+  const [qrExpanded, setQrExpanded] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -81,12 +82,12 @@ function MemberAccount() {
 
       {user?.id ? (
         <SectionCard>
-          <View style={styles.qrRow}>
+          <Pressable style={styles.qrRow} onPress={() => setQrExpanded(true)}>
             <View style={styles.qrCopy}>
               <Text style={styles.qrTitle}>My clinic code</Text>
               <Text style={styles.qrText}>
                 Show this at your clinic — they scan it to link your treatment to your
-                Veriba account, so updates reach this phone.
+                Veriba account, so updates reach this phone. Tap to enlarge.
               </Text>
             </View>
             <View style={styles.qrBox}>
@@ -97,9 +98,25 @@ function MemberAccount() {
                 backgroundColor="transparent"
               />
             </View>
-          </View>
+          </Pressable>
         </SectionCard>
       ) : null}
+
+      <Modal
+        visible={qrExpanded}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setQrExpanded(false)}>
+        <Pressable style={styles.qrModalBackdrop} onPress={() => setQrExpanded(false)}>
+          <View style={styles.qrModalCard}>
+            <Text style={styles.qrModalName}>{user?.name ?? 'Veriba member'}</Text>
+            {user?.id ? (
+              <QRCode value={`veriba:member:${user.id}`} size={260} color="#000" backgroundColor="#fff" />
+            ) : null}
+            <Text style={styles.qrModalHint}>Hold steady for the clinic to scan · tap to close</Text>
+          </View>
+        </Pressable>
+      </Modal>
 
       <SectionCard style={styles.menuCard}>
         {MEMBER_MENU.map(([icon, label], index) => (
@@ -483,6 +500,31 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bgCard,
     borderWidth: 1,
     borderColor: colors.borderLight,
+  },
+  qrModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(18,12,7,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+  },
+  qrModalCard: {
+    backgroundColor: colors.white,
+    borderRadius: radii.xl,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  qrModalName: {
+    fontFamily: fonts.display.medium,
+    fontSize: 20,
+    color: '#23201c',
+  },
+  qrModalHint: {
+    ...typography.bodyXs,
+    color: colors.textMid,
+    textAlign: 'center',
   },
   footerMeta: {
     alignItems: 'center',
