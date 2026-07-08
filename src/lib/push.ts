@@ -23,8 +23,20 @@ Notifications.setNotificationHandler({
 });
 
 let currentToken: string | null = null;
+// Bootstrap can run more than once at startup; without this guard two
+// concurrent registrations race the same token into the backend and one
+// loses on the unique constraint (409), leaving registration non-deterministic.
+let inFlight: Promise<void> | null = null;
 
-export async function registerForPushNotifications(): Promise<void> {
+export function registerForPushNotifications(): Promise<void> {
+  if (inFlight) return inFlight;
+  inFlight = doRegister().finally(() => {
+    inFlight = null;
+  });
+  return inFlight;
+}
+
+async function doRegister(): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
     const { status } = await Notifications.getPermissionsAsync();
