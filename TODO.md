@@ -10,6 +10,16 @@ by backend e2e side effects — again; see Housekeeping) · provider
 
 ## Now — correctness & security
 
+- [ ] **OAuth (Apple + Google)** — built July 7, awaiting John's live sign-in
+  tests. Backend `f5975a2` (migration `0008`, 98/98 tests): `POST
+  /api/auth/oauth` verifies provider JWTs against JWKS, links by subject →
+  verified email → creates member. Frontend: native Apple/Google buttons on
+  the auth screen (hidden for clinic signup), Google client ID from Firebase
+  project `veriba-4acaa`, dev client rebuilt with both modules. Verified: the
+  Google consent sheet opens in-simulator. Remaining: John completes a Google
+  sign-in (simulator ok) and an Apple sign-in on his iPhone (needs one Xcode
+  rebuild; test "Hide My Email" for the private-relay path).
+
 - [ ] **Stable API hostname.** The quick trycloudflare URL rotates whenever the tunnel
   restarts, breaking `EXPO_PUBLIC_VERIBA_API_BASE_URL` and all stored image URLs.
   Move to a named Cloudflare tunnel / real domain before wider testing. *(Needs
