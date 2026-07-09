@@ -1107,6 +1107,8 @@ export type ApprovalItem = {
     category: string;
     before_image_url?: string | null;
     after_image_url?: string | null;
+    before_blurhash?: string | null;
+    after_blurhash?: string | null;
   };
   discount_offer: { full: number; partial: number; full_blur: number };
 };
@@ -1259,6 +1261,26 @@ export async function respondToApproval(
   }>(`/api/me/approvals/${followupId}/respond`, {
     method: 'POST',
     body: { decision, signature_svg: signatureSvg ?? undefined },
+  });
+}
+
+/** In-app after-photo upload for a pending_after approval (GROWTH-SPEC §8). */
+export async function uploadApprovalPhoto(followupId: string, photo: CapturedPhoto) {
+  const formData = new FormData();
+  formData.append('file', {
+    uri: photo.uri,
+    name: photo.fileName ?? `${followupId}-after.jpg`,
+    type: photo.mimeType ?? 'image/jpeg',
+  } as never);
+
+  return request<{
+    session: {
+      after_image_url?: string | null;
+      after_blurhash?: string | null;
+    };
+  }>(`/api/me/approvals/${followupId}/photo`, {
+    method: 'POST',
+    body: formData,
   });
 }
 
