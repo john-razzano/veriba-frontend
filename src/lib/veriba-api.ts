@@ -1475,7 +1475,9 @@ export async function unpublishSession(sessionId: string) {
 export async function createSessionFollowUp(
   sessionId: string,
   payload: {
-    patient_email: string;
+    // Optional when patient_user_id is set (GROWTH-SPEC §7) — a QR-linked
+    // member doesn't need an email for the app-push path.
+    patient_email?: string;
     patient_first_name: string;
     send_at: string;
     message?: string;

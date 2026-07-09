@@ -170,8 +170,9 @@ export default function PhotosStepScreen() {
         !wizard.beforePhoto ||
         (wizard.followUpRequest.method === 'patient_link' &&
           !afterPhoto &&
-          (!wizard.followUpRequest.patientEmail.trim() ||
-            !wizard.followUpRequest.patientFirstName.trim()))
+          (!wizard.followUpRequest.patientFirstName.trim() ||
+            (!wizard.followUpRequest.patientUserId &&
+              !wizard.followUpRequest.patientEmail.trim())))
       }
       onContinue={() => router.push('/wizard/consent')}>
       <Text style={styles.title}>Build Before & After Pair</Text>
@@ -287,27 +288,15 @@ export default function PhotosStepScreen() {
               {wizard.followUpRequest.method === 'patient_link' ? (
                 <View style={styles.formStack}>
                   <Text style={styles.inlineLabel}>Patient Link Details</Text>
-                  <AppInput
-                    value={wizard.followUpRequest.patientFirstName}
-                    onChangeText={(value) => setWizardFollowUpRequest({ patientFirstName: value })}
-                    placeholder="Patient first name"
-                  />
-                  <AppInput
-                    value={wizard.followUpRequest.patientEmail}
-                    onChangeText={(value) => setWizardFollowUpRequest({ patientEmail: value })}
-                    placeholder="Patient email"
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                  />
 
                   {wizard.followUpRequest.patientUserId ? (
                     <View style={styles.memberBadge}>
-                      <Ionicons name="checkmark-circle" size={15} color={colors.success} />
+                      <Ionicons name="checkmark-circle" size={18} color={colors.success} />
                       <Text style={styles.memberBadgeText}>
                         {wizard.followUpRequest.memberMatchName
                           ? `${wizard.followUpRequest.memberMatchName} — Veriba member`
                           : 'Member code linked'}
-                        {' · they’ll get an app notification'}
+                        {'\nThey’ll get an app notification — no email needed.'}
                       </Text>
                       <Pressable
                         onPress={() =>
@@ -320,13 +309,52 @@ export default function PhotosStepScreen() {
                       </Pressable>
                     </View>
                   ) : (
-                    <Pressable style={styles.scanBtn} onPress={() => setScanOpen(true)}>
-                      <Ionicons name="qr-code-outline" size={15} color={colors.text} />
-                      <Text style={styles.scanBtnText}>
-                        Scan the patient's member code
-                      </Text>
+                    <Pressable style={styles.scanBtnPrimary} onPress={() => setScanOpen(true)}>
+                      <Ionicons name="qr-code-outline" size={20} color={colors.white} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.scanBtnPrimaryText}>
+                          Scan patient's Veriba code
+                        </Text>
+                        <Text style={styles.scanBtnPrimarySub}>
+                          Fastest — links the exact account, sends an app notification
+                        </Text>
+                      </View>
                     </Pressable>
                   )}
+
+                  <View style={styles.orDivider}>
+                    <View style={styles.orLine} />
+                    <Text style={styles.orText}>
+                      {wizard.followUpRequest.patientUserId
+                        ? 'OR ADD AN EMAIL BACKUP'
+                        : "OR IF THEY DON'T HAVE THE APP"}
+                    </Text>
+                    <View style={styles.orLine} />
+                  </View>
+
+                  <AppInput
+                    value={wizard.followUpRequest.patientFirstName}
+                    onChangeText={(value) => setWizardFollowUpRequest({ patientFirstName: value })}
+                    placeholder="Patient first name"
+                  />
+                  <AppInput
+                    value={wizard.followUpRequest.patientEmail}
+                    onChangeText={(value) => setWizardFollowUpRequest({ patientEmail: value })}
+                    placeholder={
+                      wizard.followUpRequest.patientUserId
+                        ? 'Patient email (optional)'
+                        : 'Patient email'
+                    }
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                  {!wizard.followUpRequest.patientUserId ? (
+                    <Text style={styles.emailHint}>
+                      No app? We'll email them a secure link to upload their photo and review
+                      the results on the web — no account required.
+                    </Text>
+                  ) : null}
+
                   <AppInput
                     value={wizard.followUpRequest.message}
                     onChangeText={(value) => setWizardFollowUpRequest({ message: value })}
@@ -548,40 +576,68 @@ const styles = StyleSheet.create({
   memberBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 9,
     backgroundColor: colors.successBg,
     borderWidth: 1,
     borderColor: '#D6E8DD',
     borderRadius: radii.lg,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
   },
   memberBadgeText: {
     ...typography.bodyXs,
     color: colors.success,
     flex: 1,
     fontFamily: fonts.body.semibold,
+    lineHeight: 16,
   },
   memberUnlink: {
     ...typography.bodyXs,
     color: colors.textMid,
     textDecorationLine: 'underline',
   },
-  scanBtn: {
+  scanBtnPrimary: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.bgCard,
+    gap: 12,
+    backgroundColor: colors.copper,
     borderRadius: radii.lg,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  scanBtnText: {
+  scanBtnPrimaryText: {
+    fontFamily: fonts.body.bold,
+    fontSize: 14.5,
+    color: colors.white,
+  },
+  scanBtnPrimarySub: {
+    fontFamily: fonts.body.regular,
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.85)',
+    marginTop: 2,
+  },
+  orDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginVertical: 2,
+  },
+  orLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  orText: {
     fontFamily: fonts.body.semibold,
-    fontSize: 12,
-    color: colors.text,
+    fontSize: 9.5,
+    letterSpacing: 0.6,
+    color: colors.textLight,
+  },
+  emailHint: {
+    ...typography.bodyXs,
+    color: colors.textLight,
+    lineHeight: 16,
+    marginTop: -4,
   },
   formStack: {
     gap: spacing.sm,

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -66,6 +67,18 @@ export default function InboxScreen() {
                     beforeUri={approval.session.before_image_url}
                     afterUri={approval.session.after_image_url}
                     height={110}
+                  />
+                ) : approval.session.after_image_url || approval.session.before_image_url ? (
+                  // Only one image is on file yet — show it so multiple pending
+                  // approvals are still visually distinguishable at a glance.
+                  <Image
+                    source={{
+                      uri: (approval.session.after_image_url ??
+                        approval.session.before_image_url) as string,
+                    }}
+                    style={styles.previewImage}
+                    contentFit="cover"
+                    transition={150}
                   />
                 ) : null}
                 <View style={styles.reviewBody}>
@@ -160,6 +173,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 18,
     elevation: 8,
+  },
+  previewImage: {
+    width: '100%',
+    height: 110,
+    backgroundColor: 'rgba(255,255,255,0.15)',
   },
   reviewBody: { padding: 15, paddingTop: 13 },
   eyebrow: {

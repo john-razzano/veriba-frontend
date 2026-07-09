@@ -1217,11 +1217,12 @@ export const useProveStore = create<ProveStore>((set, get) => ({
 
       if (
         wizard.followUpRequest.method === 'patient_link' &&
-        wizard.followUpRequest.patientEmail.trim() &&
-        wizard.followUpRequest.patientFirstName.trim()
+        wizard.followUpRequest.patientFirstName.trim() &&
+        (wizard.followUpRequest.patientEmail.trim() || wizard.followUpRequest.patientUserId)
       ) {
+        const trimmedEmail = wizard.followUpRequest.patientEmail.trim();
         const rawFollowUp = await createSessionFollowUp(sessionId, {
-          patient_email: wizard.followUpRequest.patientEmail.trim(),
+          patient_email: trimmedEmail || undefined,
           patient_first_name: wizard.followUpRequest.patientFirstName.trim(),
           patient_user_id: wizard.followUpRequest.patientUserId ?? undefined,
           send_at: wizard.followUpRequest.sendImmediately
@@ -1239,7 +1240,11 @@ export const useProveStore = create<ProveStore>((set, get) => ({
           timing: wizard.followUpRequest.timing,
           method: 'patient_link',
           sendImmediately: wizard.followUpRequest.sendImmediately,
-          patientDestination: wizard.followUpRequest.patientEmail.trim(),
+          patientDestination:
+            trimmedEmail ||
+            (wizard.followUpRequest.memberMatchName
+              ? `${wizard.followUpRequest.memberMatchName} (linked account)`
+              : 'Linked Veriba account'),
         };
       } else if (wizard.followUpRequest.method === 'follow_up_visit') {
         followUpRequest = {
