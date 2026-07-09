@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppInput, ChipButton, SectionCard } from '@/src/components/ui';
-import { MemberScanModal } from '@/src/components/member-scan';
 import {
   PhotoSlot,
   ProgressionCarouselCard,
@@ -32,7 +31,6 @@ export default function PhotosStepScreen() {
   const setWizardPatientInitials = useProveStore((state) => state.setWizardPatientInitials);
   const setWizardFollowUpRequest = useProveStore((state) => state.setWizardFollowUpRequest);
   const [loadingSlot, setLoadingSlot] = useState<'baseline' | 'after' | null>(null);
-  const [scanOpen, setScanOpen] = useState(false);
 
   // Email → member match (badge only; a QR-scanned binding always wins).
   const patientEmail = wizard.followUpRequest.patientEmail;
@@ -309,7 +307,9 @@ export default function PhotosStepScreen() {
                       </Pressable>
                     </View>
                   ) : (
-                    <Pressable style={styles.scanBtnPrimary} onPress={() => setScanOpen(true)}>
+                    <Pressable
+                      style={styles.scanBtnPrimary}
+                      onPress={() => router.push('/scan-member' as never)}>
                       <Ionicons name="qr-code-outline" size={20} color={colors.white} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.scanBtnPrimaryText}>
@@ -416,19 +416,6 @@ export default function PhotosStepScreen() {
         autoCapitalize="characters"
         maxLength={5}
         placeholder="Enter initials"
-      />
-      <MemberScanModal
-        visible={scanOpen}
-        onClose={() => setScanOpen(false)}
-        onLinked={(member) =>
-          setWizardFollowUpRequest({
-            patientUserId: member.id,
-            memberMatchName: member.name ?? null,
-            patientFirstName:
-              wizard.followUpRequest.patientFirstName ||
-              (member.name ? member.name.split(' ')[0] : ''),
-          })
-        }
       />
     </WizardScreen>
   );
