@@ -49,6 +49,9 @@ export function MemberScanModal({
         {permission?.granted ? (
           <CameraView
             style={StyleSheet.absoluteFill}
+            // iOS defaults autofocus OFF — without it the lens stays fixed
+            // at a distance that never resolves a QR held close to a screen.
+            autofocus="on"
             barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
             onBarcodeScanned={onScanned}
           />
