@@ -109,10 +109,6 @@ function RootLayoutNav() {
           name="consult-request"
           options={{ headerShown: false, presentation: 'modal' }}
         />
-        <Stack.Screen
-          name="scan-member"
-          options={{ headerShown: false, presentation: 'modal' }}
-        />
         <Stack.Screen name="practice-profile" options={{ headerShown: false }} />
         <Stack.Screen name="wizard" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" options={{ headerShown: false }} />

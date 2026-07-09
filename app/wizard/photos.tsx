@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Redirect, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { AppInput, ChipButton, SectionCard } from '@/src/components/ui';
@@ -21,6 +22,8 @@ import {
 } from '@/src/utils/format';
 import { pickCapturedPhoto } from '@/src/utils/media';
 
+const QR_PREFIX = 'veriba:member:';
+
 export default function PhotosStepScreen() {
   const router = useRouter();
   const wizard = useProveStore((state) => state.wizard);
@@ -31,6 +34,40 @@ export default function PhotosStepScreen() {
   const setWizardPatientInitials = useProveStore((state) => state.setWizardPatientInitials);
   const setWizardFollowUpRequest = useProveStore((state) => state.setWizardFollowUpRequest);
   const [loadingSlot, setLoadingSlot] = useState<'baseline' | 'after' | null>(null);
+  const [, requestCameraPermission] = useCameraPermissions();
+  const scanHandledRef = useRef(false);
+
+  const onScanMemberCode = async () => {
+    const permission = await requestCameraPermission();
+    if (!permission.granted) return;
+    if (!CameraView.isModernBarcodeScannerAvailable) {
+      Alert.alert('Scanner unavailable', 'QR scanning needs iOS 16 or later on this device.');
+      return;
+    }
+
+    scanHandledRef.current = false;
+    const sub = CameraView.onModernBarcodeScanned(({ data }) => {
+      if (scanHandledRef.current || !data.startsWith(QR_PREFIX)) return;
+      scanHandledRef.current = true;
+      sub.remove();
+      void CameraView.dismissScanner();
+
+      const userId = data.slice(QR_PREFIX.length).trim();
+      lookupMember({ userId })
+        .then((res) => res.member ?? { id: userId })
+        .catch(() => ({ id: userId, name: null, initials: null }))
+        .then((member) => {
+          setWizardFollowUpRequest({
+            patientUserId: member.id,
+            memberMatchName: member.name ?? null,
+            patientFirstName:
+              useProveStore.getState().wizard.followUpRequest.patientFirstName ||
+              (member.name ? member.name.split(' ')[0] : ''),
+          });
+        });
+    });
+    await CameraView.launchScanner({ barcodeTypes: ['qr'] });
+  };
 
   // Email → member match (badge only; a QR-scanned binding always wins).
   const patientEmail = wizard.followUpRequest.patientEmail;
@@ -309,7 +346,7 @@ export default function PhotosStepScreen() {
                   ) : (
                     <Pressable
                       style={styles.scanBtnPrimary}
-                      onPress={() => router.push('/scan-member' as never)}>
+                      onPress={() => void onScanMemberCode()}>
                       <Ionicons name="qr-code-outline" size={20} color={colors.white} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.scanBtnPrimaryText}>
