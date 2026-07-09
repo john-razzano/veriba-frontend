@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import { Platform } from 'react-native';
 
 import { registerPushToken, removePushToken } from '@/src/lib/veriba-api';
@@ -75,5 +76,37 @@ export async function unregisterPushToken(): Promise<void> {
     await removePushToken(token);
   } catch {
     // Best effort — backend also cleans up DeviceNotRegistered tokens.
+  }
+}
+
+type PushData = { followup_id?: string; kind?: 'approval' | 'after_upload' } | undefined;
+
+function navigateFromNotificationData(data: PushData) {
+  if (!data?.followup_id) return;
+  if (data.kind === 'after_upload') {
+    // No dedicated in-app upload screen yet — Inbox is the closest surface
+    // (the emailed upload_url link is still the actual upload path).
+    router.push('/(tabs)/inbox' as never);
+  } else {
+    router.push(`/approval/${data.followup_id}` as never);
+  }
+}
+
+/** Tapped while the app is running (foreground or backgrounded, not killed). */
+export function registerNotificationResponseHandler(): () => void {
+  const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+    navigateFromNotificationData(response.notification.request.content.data as PushData);
+  });
+  return () => sub.remove();
+}
+
+/** Cold start via notification tap — check once the navigator is mounted. */
+export async function handleInitialNotificationResponse(): Promise<void> {
+  try {
+    const response = await Notifications.getLastNotificationResponseAsync();
+    if (!response) return;
+    navigateFromNotificationData(response.notification.request.content.data as PushData);
+  } catch {
+    // Nothing to navigate to — ignore.
   }
 }

@@ -18,6 +18,10 @@ import {
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 
+import {
+  handleInitialNotificationResponse,
+  registerNotificationResponseHandler,
+} from '@/src/lib/push';
 import { useProveStore } from '@/src/store/prove-store';
 import { navigationTheme } from '@/src/theme';
 
@@ -64,6 +68,17 @@ export default function RootLayout() {
     if (loaded && sessionRestored) {
       SplashScreen.hideAsync();
     }
+  }, [loaded, sessionRestored]);
+
+  // Tap-to-navigate: a listener for taps while running, plus a one-time
+  // check for a cold start launched by tapping a notification. Gated on the
+  // same readiness the splash screen waits for so the Stack is mounted
+  // before router.push runs.
+  useEffect(() => {
+    if (!loaded || !sessionRestored) return;
+    const unsubscribe = registerNotificationResponseHandler();
+    void handleInitialNotificationResponse();
+    return unsubscribe;
   }, [loaded, sessionRestored]);
 
   if (!loaded || !sessionRestored) {

@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BeforeAfterSlider } from '@/src/components/before-after-slider';
@@ -33,20 +33,36 @@ export default function InboxScreen() {
   const router = useRouter();
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadApprovals(true).then(setApprovals).catch(() => {});
+  const load = useCallback((force: boolean) => {
+    return Promise.all([
+      loadApprovals(force).then(setApprovals),
       // tolerates the endpoint not existing yet — section just stays hidden
       listMyActivity()
         .then((res) => setActivity(res.items))
-        .catch(() => {});
-    }, [])
+        .catch(() => {}),
+    ]).catch(() => {});
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      void load(true);
+    }, [load])
   );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    void load(true).finally(() => setRefreshing(false));
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.copper} />
+        }>
         <View style={styles.headRow}>
           <Text style={styles.heading}>Inbox</Text>
           <Ionicons name="notifications-outline" size={20} color={colors.textMid} />
