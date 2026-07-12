@@ -1163,6 +1163,7 @@ export type ActivityItem = {
   text: string;
   timestamp: string;
   session_id?: string | null;
+  credit_id?: string | null;
 };
 
 /** Derived member activity for the Inbox "Earlier" section. */
@@ -1178,6 +1179,25 @@ export type MyResultCard = PublicSessionCard & {
 /** The member's own sessions (matched by followup email), incl. unpublished. */
 export async function listMyResults() {
   return request<{ sessions: MyResultCard[]; total: number }>('/api/me/results');
+}
+
+export type MyRewardCard = {
+  id: string;
+  code: string;
+  amount: number;
+  description: string;
+  consent_tier: string;
+  status: 'active' | 'redeemed' | 'expired' | 'voided';
+  earned_at: string;
+  expires_at: string;
+  redeemed_at?: string | null;
+  practice: { id: string; name: string; location?: string | null };
+  session: { id: string; treatment: string; after_image_url?: string | null };
+};
+
+/** The member's earned discount codes, across all practices (GROWTH-SPEC §9). */
+export async function listMyRewards() {
+  return request<{ credits: MyRewardCard[]; total: number }>('/api/me/credits');
 }
 
 // --- Consult requests (GROWTH-SPEC §1) ---

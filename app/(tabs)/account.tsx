@@ -26,6 +26,7 @@ export default function AccountScreen() {
 
 const MEMBER_MENU = [
   ['grid-outline', 'My before & afters'],
+  ['gift-outline', 'My rewards'],
   ['bookmark-outline', 'Saved clinics'],
   ['lock-closed-outline', 'Privacy & consent'],
   ['settings-outline', 'Settings'],
@@ -125,9 +126,11 @@ function MemberAccount() {
             onPress={() =>
               label === 'My before & afters'
                 ? router.push('/my-results' as Href)
-                : label === 'Saved clinics'
-                  ? router.push('/(tabs)/saved' as Href)
-                  : Alert.alert(label, 'Coming soon.')
+                : label === 'My rewards'
+                  ? router.push('/rewards' as Href)
+                  : label === 'Saved clinics'
+                    ? router.push('/(tabs)/saved' as Href)
+                    : Alert.alert(label, 'Coming soon.')
             }
             style={[styles.menuRow, index < MEMBER_MENU.length - 1 && styles.menuRowBorder]}>
             <Ionicons name={icon} size={17} color={colors.textMid} />

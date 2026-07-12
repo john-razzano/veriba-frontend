@@ -104,6 +104,7 @@ function RootLayoutNav() {
           options={{ headerShown: false, gestureEnabled: false }}
         />
         <Stack.Screen name="my-results" options={{ headerShown: false }} />
+        <Stack.Screen name="rewards" options={{ headerShown: false }} />
         <Stack.Screen name="clinic/[slug]" options={{ headerShown: false }} />
         <Stack.Screen
           name="consult-request"

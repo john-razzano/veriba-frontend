@@ -25,6 +25,24 @@ const ACTIVITY_ICONS: Record<ActivityKind, { name: string; bg: string; tint: str
   consult_request: { name: 'chatbubble-ellipses-outline', bg: colors.warningBg, tint: colors.copper },
 };
 
+// case_published always points at a publicly-live case, so /case/{id} is safe.
+// The other kinds can reference private/unpublished sessions (e.g. a blurred
+// consent tier still earns a reward) — route those to the member's own
+// screens instead of the public feed, where they'd 404.
+function activityHref(item: ActivityItem): Href | null {
+  switch (item.kind) {
+    case 'case_published':
+      return item.session_id ? (`/case/${item.session_id}` as Href) : null;
+    case 'credit_earned':
+    case 'credit_expiring':
+      return '/rewards' as Href;
+    case 'approval_completed':
+      return '/my-results' as Href;
+    default:
+      return null;
+  }
+}
+
 /**
  * Consumer inbox (mockup C3): provider posts awaiting the patient's approval,
  * followed by an activity list.
@@ -140,11 +158,9 @@ export default function InboxScreen() {
                   </View>
                 </>
               );
-              return item.session_id ? (
-                <Pressable
-                  key={item.id}
-                  style={styles.actItem}
-                  onPress={() => router.push(`/case/${item.session_id}` as Href)}>
+              const href = activityHref(item);
+              return href ? (
+                <Pressable key={item.id} style={styles.actItem} onPress={() => router.push(href)}>
                   {body}
                 </Pressable>
               ) : (
