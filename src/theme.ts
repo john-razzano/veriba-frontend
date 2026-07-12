@@ -21,6 +21,7 @@ export const colors = {
   warningBg: '#FBF3EC',
   error: '#B43C3C',
   errorBg: '#FBECEC',
+  tealBg: '#EAF0F2',
   white: '#FFFFFF',
   black: '#000000',
 } as const;

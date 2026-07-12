@@ -220,7 +220,7 @@ function ProviderTile({
       />
       {showStatus ? (
         <View style={styles.tileStatus}>
-          <StatusPill status={session.status} />
+          <StatusPill status={session.status} compact />
         </View>
       ) : featured ? (
         <View style={styles.featuredPill}>
@@ -303,8 +303,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     left: 6,
-    transform: [{ scale: 0.85 }],
-    transformOrigin: 'top left',
   },
   featuredPill: {
     position: 'absolute',

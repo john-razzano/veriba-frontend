@@ -79,23 +79,41 @@ export function OutlineButton({
   );
 }
 
-export function StatusPill({ status }: { status: SessionStatus }) {
+// Compact labels for the dashboard tile overlay, where the pill sits atop a
+// photo at ~110px wide — the full statusLabel() text wraps to two lines there.
+const COMPACT_STATUS_LABELS: Partial<Record<SessionStatus, string>> = {
+  pending_after: 'NEEDS PHOTO',
+  pending_consent: 'NEEDS CONSENT',
+  ready_to_publish: 'READY',
+  unpublished: 'HIDDEN',
+};
+
+export function StatusPill({ status, compact }: { status: SessionStatus; compact?: boolean }) {
+  // Opaque tints everywhere: these pills render both on plain white cards and
+  // (compact mode) directly atop photos, where a translucent background loses
+  // contrast against light images.
   const tone =
     status === 'published'
       ? { bg: colors.successBg, text: colors.success }
       : status === 'pending_after'
         ? { bg: colors.warningBg, text: colors.warning }
       : status === 'ready_to_publish'
-        ? { bg: 'rgba(45,79,94,0.08)', text: colors.teal }
+        ? { bg: colors.tealBg, text: colors.teal }
       : status === 'pending_consent'
-        ? { bg: 'rgba(45,79,94,0.08)', text: colors.teal }
+        ? { bg: colors.tealBg, text: colors.teal }
         : status === 'declined'
-          ? { bg: 'rgba(156,74,65,0.12)', text: colors.error }
+          ? { bg: colors.errorBg, text: colors.error }
         : { bg: colors.borderLight, text: colors.textLight };
 
+  const label = (compact && COMPACT_STATUS_LABELS[status]) || statusLabel(status);
+
   return (
-    <View style={[styles.pill, { backgroundColor: tone.bg }]}>
-      <Text style={[styles.pillText, { color: tone.text }]}>{statusLabel(status)}</Text>
+    <View style={[styles.pill, compact && styles.pillCompact, { backgroundColor: tone.bg }]}>
+      <Text
+        style={[styles.pillText, compact && styles.pillTextCompact, { color: tone.text }]}
+        numberOfLines={1}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -238,6 +256,14 @@ const styles = StyleSheet.create({
   },
   pillText: {
     ...typography.pill,
+  },
+  pillCompact: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  pillTextCompact: {
+    fontSize: 7.5,
+    letterSpacing: 0.3,
   },
   avatar: {
     alignItems: 'center',
