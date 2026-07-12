@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -291,7 +292,10 @@ function ProviderAccount() {
 
       <View style={styles.footerMeta}>
         <Text style={styles.footerText}>© 2026 Agence Studio</Text>
-        <Text style={styles.footerText}>Version 1.0.0 (2)</Text>
+        <Text style={styles.footerText}>
+          Version {Constants.expoConfig?.version ?? '1.0.0'} (
+          {Constants.expoConfig?.ios?.buildNumber ?? '—'})
+        </Text>
       </View>
 
       <OutlineButton
